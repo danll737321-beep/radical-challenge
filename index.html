@@ -43,20 +43,32 @@
   }
   .btn-primary:active{ transform:translateY(2px); box-shadow:0 2px 0 #C9762F; }
   .link-btn{ background:none; color:var(--blue); font-size:15px; margin-top:14px; text-decoration:underline; }
-  .level-list{ width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; }
+  .level-list{
+    width:100%; max-width:460px; display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:14px;
+  }
   .level-card{
-    display:flex; align-items:center; gap:16px; background:var(--card);
-    border-radius:18px; padding:16px 18px; box-shadow:var(--shadow); cursor:pointer;
+    background:var(--card); border-radius:18px; padding:18px;
+    box-shadow:var(--shadow); cursor:pointer;
+    border:2px solid var(--lv-color, #EEDDC8);
   }
   .level-icon{
-    width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-size:26px; color:#fff; flex-shrink:0;
+    width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:20px; color:#fff; margin-bottom:12px; background:var(--lv-color, var(--orange));
   }
-  .level-info{ flex:1; }
-  .level-name{ font-size:20px; font-weight:700; }
-  .level-sub{ font-size:14px; color:#A98868; margin-top:2px; }
-  .level-progress{ height:6px; background:#F1E4D0; border-radius:4px; margin-top:8px; overflow:hidden; }
-  .level-progress-bar{ height:100%; background:var(--green); border-radius:4px; }
+  .level-name{ font-size:19px; font-weight:800; margin-bottom:8px; }
+  .level-badge{
+    display:inline-block; background:#F1E4D0; color:var(--brown);
+    font-size:13px; font-weight:600; border-radius:10px; padding:3px 10px; margin-bottom:8px;
+  }
+  .level-sub{ font-size:14px; color:#8A6F55; line-height:1.4; margin-bottom:10px; }
+  .level-progress{ height:6px; background:#F1E4D0; border-radius:4px; overflow:hidden; margin-bottom:6px; }
+  .level-progress-bar{ height:100%; background:var(--lv-color, var(--green)); border-radius:4px; }
+  .level-status{ font-size:13px; color:#A98868; }
+
+  @media (max-width:400px){
+    .level-list{ grid-template-columns:1fr; }
+  }
 
   .topbar{ width:100%; max-width:480px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .score-pill{ background:#fff; border-radius:20px; padding:8px 16px; box-shadow:var(--shadow); font-weight:700; font-size:15px; }
@@ -1404,10 +1416,10 @@ const DATA = [
 const API_URL = 'https://script.google.com/macros/s/AKfycbztwnHDW5KjkVYovtIi04b9dZd_xT6P2_oxRRDL4xS-lGYiaFbsFIKcq48GGOFQhhVcrw/exec'; // 你的 GAS /exec 網址，部署後貼在這裡
 
 const LEVELS = [
-  { id:1, name:'Sprout',  zh:'幼苗', icon:'🌟', color:'#2E9E6C' },
-  { id:2, name:'Sapling', zh:'幼樹', icon:'🌊', color:'#3B82C4' },
-  { id:3, name:'Bloom',   zh:'開花', icon:'🚀', color:'#F2994A' },
-  { id:4, name:'Harvest', zh:'豐收', icon:'▦',  color:'#E0554F' },
+  { id:1, name:'Sprout',  zh:'幼苗', icon:'🌟', color:'#2E9E6C', desc:'打好基礎，累積信心' },
+  { id:2, name:'Sapling', zh:'幼樹', icon:'🌊', color:'#1E9E9E', desc:'進階挑戰，累積詞彙' },
+  { id:3, name:'Bloom',   zh:'開花', icon:'🚀', color:'#E0527A', desc:'深入練習，融會貫通' },
+  { id:4, name:'Harvest', zh:'豐收', icon:'▦',  color:'#7C5CFC', desc:'全面掌握，挑戰豐收' },
 ];
 
 let currentUser = null;
@@ -1485,13 +1497,14 @@ function renderLevels(){
     const div = document.createElement('div');
     div.className = 'level-card';
     div.onclick = ()=> startLevel(lv.id);
+    div.style.setProperty('--lv-color', lv.color);
     div.innerHTML = `
-      <div class="level-icon" style="background:${lv.color}">${lv.icon}</div>
-      <div class="level-info">
-        <div class="level-name">${lv.zh} ${lv.name}</div>
-        <div class="level-sub">${count} 個字 · 近10題正確率 ${acc}%</div>
-        <div class="level-progress"><div class="level-progress-bar" style="width:${acc}%"></div></div>
-      </div>`;
+      <div class="level-icon">${lv.icon}</div>
+      <div class="level-name">${lv.zh} ${lv.name}</div>
+      <div class="level-badge">${count} 個字 ${count} chars</div>
+      <div class="level-sub">${lv.desc}</div>
+      <div class="level-progress"><div class="level-progress-bar" style="width:${acc}%"></div></div>
+      <div class="level-status">近10題正確率 ${acc}% ${results.length ? '' : '· 尚未開始 Not started'}</div>`;
     list.appendChild(div);
   });
 }
