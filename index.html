@@ -1554,7 +1554,7 @@ function doSearch(){
 
   const qLower = q.toLowerCase();
   const matches = DATA.filter(d =>
-    d.bopomofo.includes(q) || d.pinyin.toLowerCase().includes(qLower)
+    d.char === q || d.bopomofo.includes(q) || d.pinyin.toLowerCase().includes(qLower)
   ).slice(0, 20);
 
   if(matches.length === 0){
