@@ -89,26 +89,26 @@
 
 <!-- 登入畫面 -->
 <div id="screen-login" class="screen active">
-  <h1>部首大挑戰</h1>
+  <h1>Radical Challenge</h1>
   <p class="subtitle">Guess the radical, then watch the character come to life</p>
   <div class="card">
-    <input id="login-username" placeholder="帳號" autocomplete="username">
-    <input id="login-password" type="password" placeholder="密碼" autocomplete="current-password">
-    <button class="btn-primary" onclick="doLogin()">登入</button>
+    <input id="login-username" placeholder="Username" autocomplete="username">
+    <input id="login-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Log in</button>
     <div class="error-msg" id="login-error"></div>
-    <button class="link-btn" onclick="showScreen('screen-register')">還沒有帳號？註冊</button>
+    <button class="link-btn" onclick="showScreen('screen-register')">First time? Register</button>
   </div>
 </div>
 
 <!-- 註冊畫面 -->
 <div id="screen-register" class="screen">
-  <h1>建立帳號</h1>
+  <h1>Create Account</h1>
   <div class="card">
-    <input id="reg-username" placeholder="帳號">
-    <input id="reg-password" type="password" placeholder="密碼">
-    <button class="btn-primary" onclick="doRegister()">註冊</button>
+    <input id="reg-username" placeholder="Username">
+    <input id="reg-password" type="password" placeholder="Password">
+    <button class="btn-primary" onclick="doRegister()">Register</button>
     <div class="error-msg" id="register-error"></div>
-    <button class="link-btn" onclick="showScreen('screen-login')">已經有帳號？登入</button>
+    <button class="link-btn" onclick="showScreen('screen-login')">Already have an account? Log in</button>
   </div>
 </div>
 
@@ -1439,7 +1439,7 @@ async function doLogin(){
   const password = document.getElementById('login-password').value;
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
-  if(!username || !password){ errEl.textContent = '請輸入帳號與密碼'; return; }
+  if(!username || !password){ errEl.textContent = 'Please enter a username and password'; return; }
   try{
     const result = await apiCall('login', { username, password });
     if(result.success){
@@ -1447,10 +1447,10 @@ async function doLogin(){
       renderLevels();
       showScreen('screen-levels');
     } else {
-      errEl.textContent = result.message || '帳號或密碼錯誤';
+      errEl.textContent = result.message || 'Incorrect username or password';
     }
   } catch(e){
-    errEl.textContent = '連線失敗，請稍後再試';
+    errEl.textContent = 'Connection failed, please try again later';
   }
 }
 
@@ -1459,7 +1459,7 @@ async function doRegister(){
   const password = document.getElementById('reg-password').value;
   const errEl = document.getElementById('register-error');
   errEl.textContent = '';
-  if(!username || !password){ errEl.textContent = '請輸入帳號與密碼'; return; }
+  if(!username || !password){ errEl.textContent = 'Please enter a username and password'; return; }
   try{
     const result = await apiCall('register', { username, password });
     if(result.success){
@@ -1467,10 +1467,10 @@ async function doRegister(){
       renderLevels();
       showScreen('screen-levels');
     } else {
-      errEl.textContent = result.message || '註冊失敗，帳號可能已被使用';
+      errEl.textContent = result.message || 'Registration failed, this username may already be taken';
     }
   } catch(e){
-    errEl.textContent = '連線失敗，請稍後再試';
+    errEl.textContent = 'Connection failed, please try again later';
   }
 }
 
