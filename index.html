@@ -72,7 +72,9 @@
 
   .topbar{ width:100%; max-width:480px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .score-pill{ background:#fff; border-radius:20px; padding:8px 16px; box-shadow:var(--shadow); font-weight:700; font-size:15px; }
-  .radical-question{ font-size:64px; font-weight:800; margin:20px 0; text-align:center; }
+  .question-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin:20px 0 0; }
+  .question-row .speak-btn{ font-size:24px; }
+  .radical-question{ font-size:64px; font-weight:800; }
   .choices{ width:100%; max-width:420px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .choice-btn{
     padding:20px 8px; border-radius:16px; background:#fff; box-shadow:var(--shadow);
@@ -133,11 +135,13 @@
 <!-- 遊戲畫面 -->
 <div id="screen-game" class="screen">
   <div class="topbar">
-    <span class="score-pill" id="score-pill">✅ 0</span>
     <span class="streak-badge" id="streak-badge">🔥 連對 0</span>
     <button class="link-btn" onclick="backToLevels()">← 返回</button>
   </div>
-  <div class="radical-question" id="question-char">部</div>
+  <div class="question-row">
+    <span class="radical-question" id="question-char">部</span>
+    <button class="speak-btn" id="question-speak-btn" onclick="speakText(currentQuestion.char)">🔊</button>
+  </div>
   <div style="font-size:15px;color:#A98868;margin-bottom:8px;">這個字的部首是？</div>
   <div class="choices" id="choices"></div>
 
@@ -1531,19 +1535,19 @@ function backToLevels(){
 }
 
 function updateTopbar(){
-  document.getElementById('score-pill').textContent = `✅ ${score}`;
   document.getElementById('streak-badge').textContent = `🔥 連對 ${streak}`;
 }
 
 // ====== 出題 ======
 function nextQuestion(){
   document.getElementById('reveal-card').style.display = 'none';
-  document.getElementById('question-char').style.display = 'block';
+  document.querySelector('.question-row').style.display = 'flex';
   document.querySelector('.choices').style.display = 'grid';
 
   const idx = Math.floor(Math.random()*currentPool.length);
   currentQuestion = currentPool[idx];
   document.getElementById('question-char').textContent = currentQuestion.char;
+  speakText(currentQuestion.char);
 
   // 產生四選一（正解 + 3 個干擾部首）
   const allRadicals = [...new Set(DATA.map(d=>d.radical))];
@@ -1583,7 +1587,7 @@ function answer(opt, btnEl){
 }
 
 function revealDetail(){
-  document.getElementById('question-char').style.display = 'none';
+  document.querySelector('.question-row').style.display = 'none';
   document.querySelector('.choices').style.display = 'none';
 
   const card = document.getElementById('reveal-card');
