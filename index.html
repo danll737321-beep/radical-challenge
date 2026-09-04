@@ -1642,11 +1642,28 @@ const RADICAL_STROKES = {
   '齒':15,'龍':16,'龜':16,'龠':17,
 };
 
+// 部首在字中常被寫成「簡化偏旁」，畫數會比部首單獨的畫數少，這裡做修正
+// 例：水部單獨4畫，但寫成「氵」(三點水)在字裡只有3畫
+const RADICAL_VARIANT_STROKES = {
+  '水':3,  // 氵 如：潤、河、洗
+  '心':3,  // 忄 如：情、快、慢
+  '手':3,  // 扌 如：打、拍、按
+  '犬':3,  // 犭 如：狗、猴、獅
+  '邑':3,  // 阝(右) 如：那、部、都
+  '阜':3,  // 阝(左) 如：院、陪、階
+  '示':4,  // 礻 如：祝、社、福
+  '衣':5,  // 衤 如：初、被、褲
+  '老':4,  // 耂 如：者、考
+  '艸':3,  // 艹 如：花、茶、草
+  '辵':4,  // 辶 如：進、道、還
+  '肉':4,  // 月(肉字旁) 如：肝、腦、腿
+};
+
 // ====== 筆順動畫（三色：紅=首筆，藍=部首，綠=其餘） ======
 function drawStroke(char, radical){
   const target = document.getElementById('stroke-target');
   target.innerHTML = '';
-  const radicalStrokeCount = RADICAL_STROKES[radical] || 0;
+  const radicalStrokeCount = RADICAL_VARIANT_STROKES[radical] ?? RADICAL_STROKES[radical] ?? 0;
   HanziWriter.loadCharacterData(char).then(charData=>{
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS,'svg');
