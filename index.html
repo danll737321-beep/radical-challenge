@@ -74,6 +74,7 @@
   .score-pill{ background:#fff; border-radius:20px; padding:8px 16px; box-shadow:var(--shadow); font-weight:700; font-size:15px; }
   .question-row{ display:flex; align-items:center; justify-content:center; gap:10px; margin:20px 0 0; }
   .question-row .speak-btn{ font-size:24px; }
+  .question-pron{ text-align:center; font-size:16px; color:#8A6F55; margin:2px 0 10px; }
   .radical-question{ font-size:64px; font-weight:800; }
   .choices{ width:100%; max-width:420px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .choice-btn{
@@ -142,6 +143,7 @@
     <span class="radical-question" id="question-char">部</span>
     <button class="speak-btn" id="question-speak-btn" onclick="speakText(currentQuestion.char)">🔊</button>
   </div>
+  <div class="question-pron" id="question-pron"></div>
   <div style="font-size:15px;color:#A98868;margin-bottom:8px;">這個字的部首是？</div>
   <div class="choices" id="choices"></div>
 
@@ -1542,11 +1544,13 @@ function updateTopbar(){
 function nextQuestion(){
   document.getElementById('reveal-card').style.display = 'none';
   document.querySelector('.question-row').style.display = 'flex';
+  document.getElementById('question-pron').style.display = 'block';
   document.querySelector('.choices').style.display = 'grid';
 
   const idx = Math.floor(Math.random()*currentPool.length);
   currentQuestion = currentPool[idx];
   document.getElementById('question-char').textContent = currentQuestion.char;
+  document.getElementById('question-pron').textContent = `${currentQuestion.bopomofo}　${currentQuestion.pinyin}`;
   speakText(currentQuestion.char);
 
   // 產生四選一（正解 + 3 個干擾部首）
@@ -1588,6 +1592,7 @@ function answer(opt, btnEl){
 
 function revealDetail(){
   document.querySelector('.question-row').style.display = 'none';
+  document.getElementById('question-pron').style.display = 'none';
   document.querySelector('.choices').style.display = 'none';
 
   const card = document.getElementById('reveal-card');
