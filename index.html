@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>部首大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js"></script>
+<style>
+  :root{
+    --bg1:#FFF6E9; --bg2:#FFE9D6; --card:#FFFFFF;
+    --brown:#7A4A2B; --orange:#F2994A; --green:#2E9E6C;
+    --blue:#3B82C4; --red:#E0554F; --yellow:#F4C542;
+    --shadow: 0 6px 18px rgba(122,74,43,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    font-family:'Baloo 2', '標楷體', sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--brown);
+  }
+  .screen{ display:none; min-height:100vh; padding:24px 16px; flex-direction:column; align-items:center; }
+  .screen.active{ display:flex; }
+  h1{ font-size:28px; font-weight:800; margin:8px 0 20px; }
+  .card{
+    background:var(--card); border-radius:20px; box-shadow:var(--shadow);
+    padding:20px; width:100%; max-width:420px;
+  }
+  input{
+    width:100%; padding:14px; margin:8px 0; border-radius:12px;
+    border:2px solid #EEDDC8; font-size:17px; font-family:inherit;
+  }
+  button{
+    font-family:inherit; border:none; cursor:pointer;
+  }
+  .btn-primary{
+    width:100%; padding:14px; margin-top:10px; border-radius:14px;
+    background:var(--orange); color:#fff; font-size:18px; font-weight:700;
+    box-shadow:0 4px 0 #C9762F;
+  }
+  .btn-primary:active{ transform:translateY(2px); box-shadow:0 2px 0 #C9762F; }
+  .link-btn{ background:none; color:var(--blue); font-size:15px; margin-top:14px; text-decoration:underline; }
+  .level-list{ width:100%; max-width:420px; display:flex; flex-direction:column; gap:14px; }
+  .level-card{
+    display:flex; align-items:center; gap:16px; background:var(--card);
+    border-radius:18px; padding:16px 18px; box-shadow:var(--shadow); cursor:pointer;
+  }
+  .level-icon{
+    width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:26px; color:#fff; flex-shrink:0;
+  }
+  .level-info{ flex:1; }
+  .level-name{ font-size:20px; font-weight:700; }
+  .level-sub{ font-size:14px; color:#A98868; margin-top:2px; }
+  .level-progress{ height:6px; background:#F1E4D0; border-radius:4px; margin-top:8px; overflow:hidden; }
+  .level-progress-bar{ height:100%; background:var(--green); border-radius:4px; }
+
+  .topbar{ width:100%; max-width:480px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .score-pill{ background:#fff; border-radius:20px; padding:8px 16px; box-shadow:var(--shadow); font-weight:700; font-size:15px; }
+  .radical-question{ font-size:64px; font-weight:800; margin:20px 0; text-align:center; }
+  .choices{ width:100%; max-width:420px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .choice-btn{
+    padding:20px 8px; border-radius:16px; background:#fff; box-shadow:var(--shadow);
+    font-size:26px; font-weight:700; color:var(--blue); border:2px solid transparent;
+  }
+  .choice-btn.correct{ border-color:var(--green); background:#EAFBF2; }
+  .choice-btn.wrong{ border-color:var(--red); background:#FDECEC; }
+
+  .reveal-card{ width:100%; max-width:420px; background:#fff; border-radius:20px; box-shadow:var(--shadow); padding:20px; margin-top:18px; }
+  .reveal-char{ font-size:72px; font-weight:800; text-align:center; }
+  .stroke-box{ display:flex; justify-content:center; margin:10px 0; }
+  .vocab-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:14px 0; }
+  .vocab-pill{
+    display:flex; align-items:center; gap:6px; background:var(--bg1);
+    border-radius:20px; padding:8px 14px; font-size:17px;
+  }
+  .speak-btn{ background:none; font-size:18px; padding:4px; }
+  .sentence-box{ background:var(--bg1); border-radius:14px; padding:14px 16px; font-size:17px; line-height:1.6; display:flex; gap:10px; align-items:flex-start; }
+  .next-btn{ width:100%; margin-top:16px; }
+
+  .error-msg{ color:var(--red); font-size:14px; margin-top:6px; min-height:18px; }
+  .streak-badge{ background:var(--yellow); border-radius:16px; padding:6px 12px; font-size:14px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- 登入畫面 -->
+<div id="screen-login" class="screen active">
+  <h1>🈴 部首大挑戰</h1>
+  <div class="card">
+    <input id="login-username" placeholder="帳號" autocomplete="username">
+    <input id="login-password" type="password" placeholder="密碼" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">登入</button>
+    <div class="error-msg" id="login-error"></div>
+    <button class="link-btn" onclick="showScreen('screen-register')">還沒有帳號？註冊</button>
+  </div>
+</div>
+
+<!-- 註冊畫面 -->
+<div id="screen-register" class="screen">
+  <h1>建立帳號</h1>
+  <div class="card">
+    <input id="reg-username" placeholder="帳號">
+    <input id="reg-password" type="password" placeholder="密碼">
+    <button class="btn-primary" onclick="doRegister()">註冊</button>
+    <div class="error-msg" id="register-error"></div>
+    <button class="link-btn" onclick="showScreen('screen-login')">已經有帳號？登入</button>
+  </div>
+</div>
+
+<!-- 關卡選擇 -->
+<div id="screen-levels" class="screen">
+  <h1>選擇關卡</h1>
+  <div class="level-list" id="level-list"></div>
+</div>
+
+<!-- 遊戲畫面 -->
+<div id="screen-game" class="screen">
+  <div class="topbar">
+    <span class="score-pill" id="score-pill">✅ 0</span>
+    <span class="streak-badge" id="streak-badge">🔥 連對 0</span>
+    <button class="link-btn" onclick="backToLevels()">← 返回</button>
+  </div>
+  <div class="radical-question" id="question-char">部</div>
+  <div style="font-size:15px;color:#A98868;margin-bottom:8px;">這個字的部首是？</div>
+  <div class="choices" id="choices"></div>
+
+  <div class="reveal-card" id="reveal-card" style="display:none;">
+    <div class="reveal-char" id="reveal-char"></div>
+    <div class="stroke-box"><div id="stroke-target" style="width:140px;height:140px;"></div></div>
+    <div class="vocab-row" id="vocab-row"></div>
+    <div class="sentence-box">
+      <button class="speak-btn" onclick="speakText(currentSentence)">🔊</button>
+      <span id="sentence-text"></span>
+    </div>
+    <button class="btn-primary next-btn" onclick="nextQuestion()">下一題 →</button>
+  </div>
+</div>
+
+<script>
+
+const DATA = [
+  { char: '的', level: 1, radical: '白', bopomofo: 'ㄉㄧˋ、ㄉㄧˊ、˙ㄉㄜ', pinyin: 'dì、dí、de', words: ['目的', '真的'], sentence: '這是我的書包。' },
+  { char: '一', level: 1, radical: '一', bopomofo: 'ㄧ', pinyin: 'yī', words: ['一個', '一些'], sentence: '我有一枝新鉛筆。' },
+  { char: '是', level: 1, radical: '日', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['不是', '但是'], sentence: '他是我的好朋友。' },
+  { char: '不', level: 1, radical: '一', bopomofo: 'ㄅㄨˋ、ㄈㄡˇ、ㄈㄡ、ㄈㄨ', pinyin: 'bù、fǒu、fōu、fū', words: ['不是', '不能'], sentence: '我今天不想出門。' },
+  { char: '了', level: 1, radical: '亅', bopomofo: 'ㄌㄧㄠˇ、˙ㄌㄜ', pinyin: 'liǎo、le', words: ['為了', '除了'], sentence: '我吃飽了。' },
+  { char: '我', level: 1, radical: '戈', bopomofo: 'ㄨㄛˇ、ㄜˇ', pinyin: 'wǒ、ě', words: ['我們', '我國'], sentence: '我是三年級的學生。' },
+  { char: '你', level: 1, radical: '人', bopomofo: 'ㄋㄧˇ', pinyin: 'nǐ', words: ['你們', '你好'], sentence: '你今天過得好嗎？' },
+  { char: '她', level: 1, radical: '女', bopomofo: 'ㄊㄚ', pinyin: 'tā', words: ['她們', '她家'], sentence: '她是我妹妹。' },
+  { char: '他', level: 1, radical: '人', bopomofo: 'ㄊㄚ、ㄊㄨㄛ', pinyin: 'tā、tuō', words: ['他們', '其他'], sentence: '他是我最好的朋友。' },
+  { char: '這', level: 1, radical: '辵', bopomofo: 'ㄓㄜˋ、ㄓㄟˋ', pinyin: 'zhè、zhèi', words: ['這個', '這樣'], sentence: '這是我的書包。' },
+  { char: '個', level: 1, radical: '人', bopomofo: 'ㄍㄜˋ、˙ㄍㄜ、ㄍㄜˇ', pinyin: 'gè、ge、gě', words: ['一個', '這個'], sentence: '桌上有一個蘋果。' },
+  { char: '們', level: 1, radical: '人', bopomofo: 'ㄇㄣˊ、˙ㄇㄣ', pinyin: 'mén、men', words: ['我們', '他們'], sentence: '我們一起去公園玩。' },
+  { char: '有', level: 1, radical: '月', bopomofo: 'ㄧㄡˇ、ㄧㄡˋ', pinyin: 'yǒu、yòu', words: ['沒有', '具有'], sentence: '我有一枝新鉛筆。' },
+  { char: '來', level: 1, radical: '人', bopomofo: 'ㄌㄞˊ、ㄌㄞˋ', pinyin: 'lái、lài', words: ['起來', '出來'], sentence: '請你過來這裡。' },
+  { char: '在', level: 1, radical: '土', bopomofo: 'ㄗㄞˋ', pinyin: 'zài', words: ['現在', '存在'], sentence: '弟弟正在寫功課。' },
+  { char: '上', level: 1, radical: '一', bopomofo: 'ㄕㄤˋ、ㄕㄤˇ', pinyin: 'shàng、shǎng', words: ['以上', '上海'], sentence: '請把書放在桌上。' },
+  { char: '下', level: 1, radical: '一', bopomofo: 'ㄒㄧㄚˋ', pinyin: 'xià', words: ['下來', '一下'], sentence: '請你坐下休息。' },
+  { char: '中', level: 1, radical: '丨', bopomofo: 'ㄓㄨㄥ、ㄓㄨㄥˋ', pinyin: 'zhōng、zhòng', words: ['中國', '其中'], sentence: '他站在教室中間。' },
+  { char: '大', level: 1, radical: '大', bopomofo: 'ㄉㄚˋ、ㄉㄞˋ、ㄊㄞˋ', pinyin: 'dà、dài、tài', words: ['大學', '大家'], sentence: '這隻大象既高又重。' },
+  { char: '小', level: 1, radical: '小', bopomofo: 'ㄒㄧㄠˇ', pinyin: 'xiǎo', words: ['小時', '大小'], sentence: '他不是長得很高，而是長得比較小。' },
+  { char: '好', level: 1, radical: '女', bopomofo: 'ㄏㄠˇ、ㄏㄠˋ', pinyin: 'hǎo、hào', words: ['良好', '好像'], sentence: '今天天氣真好。' },
+  { char: '多', level: 1, radical: '夕', bopomofo: 'ㄉㄨㄛ、ㄉㄨㄛˊ', pinyin: 'duō、duó', words: ['許多', '很多'], sentence: '桌上有很多水果。' },
+  { char: '口', level: 1, radical: '口', bopomofo: 'ㄎㄡˇ', pinyin: 'kǒu', words: ['人口', '出口'], sentence: '請你張開口說話。' },
+  { char: '天', level: 1, radical: '大', bopomofo: 'ㄊㄧㄢ', pinyin: 'tiān', words: ['今天', '一天'], sentence: '只要天氣好，我們就去公園玩。' },
+  { char: '人', level: 1, radical: '人', bopomofo: 'ㄖㄣˊ', pinyin: 'rén', words: ['人民', '人們'], sentence: '除非有大人陪著，才能去游泳池玩水。' },
+  { char: '父', level: 1, radical: '父', bopomofo: 'ㄈㄨˋ、ㄈㄨˇ', pinyin: 'fù、fǔ', words: ['父親', '師父'], sentence: '我很愛我的父親。' },
+  { char: '爸', level: 1, radical: '父', bopomofo: 'ㄅㄚˋ', pinyin: 'bà', words: ['爸爸', '老爸'], sentence: '爸爸每天送我上學。' },
+  { char: '媽', level: 1, radical: '女', bopomofo: 'ㄇㄚ', pinyin: 'mā', words: ['媽媽', '大媽'], sentence: '媽媽煮的飯很好吃。' },
+  { char: '姊', level: 1, radical: '女', bopomofo: 'ㄗˇ、ㄐㄧㄝˇ', pinyin: 'zǐ、jiě', words: ['姊妹', '姊夫'], sentence: '姊姊教我寫功課。' },
+  { char: '姐', level: 1, radical: '女', bopomofo: 'ㄐㄧㄝˇ', pinyin: 'jiě', words: ['小姐', '姐姐'], sentence: '姐姐每天陪我玩。' },
+  { char: '妹', level: 1, radical: '女', bopomofo: 'ㄇㄟˋ', pinyin: 'mèi', words: ['妹妹', '姊妹'], sentence: '妹妹喜歡跟我一起玩。' },
+  { char: '哥', level: 1, radical: '口', bopomofo: 'ㄍㄜ', pinyin: 'gē', words: ['哥哥', '大哥'], sentence: '哥哥帶我去公園玩。' },
+  { char: '弟', level: 1, radical: '弓', bopomofo: 'ㄉㄧˋ、ㄊㄧˋ', pinyin: 'dì、tì', words: ['兄弟', '弟子'], sentence: '弟弟今年五歲了。' },
+  { char: '兒', level: 1, radical: '儿', bopomofo: 'ㄦˊ、ㄋㄧˊ', pinyin: 'ér、ní', words: ['兒子', '女兒'], sentence: '鄰居家生了一個女兒。' },
+  { char: '子', level: 1, radical: '子', bopomofo: 'ㄗˇ、˙ㄗ', pinyin: 'zǐ、zi', words: ['孩子', '兒子'], sentence: '桌子上放著一本書。' },
+  { char: '吃', level: 1, radical: '口', bopomofo: 'ㄔ、ㄐㄧˊ', pinyin: 'chī、jí', words: ['吃飯', '口吃'], sentence: '我們一起吃晚餐。' },
+  { char: '喝', level: 1, radical: '口', bopomofo: 'ㄏㄜ、ㄏㄜˋ、ㄧㄝˋ', pinyin: 'hē、hè、yè', words: ['喝道', '喝酒'], sentence: '請你喝一杯水。' },
+  { char: '玩', level: 1, radical: '玉', bopomofo: 'ㄨㄢˋ、ㄨㄢˊ', pinyin: 'wàn、wán', words: ['玩具', '玩笑'], sentence: '我們去公園玩球。' },
+  { char: '坐', level: 1, radical: '土', bopomofo: 'ㄗㄨㄛˋ', pinyin: 'zuò', words: ['坐在', '坐下'], sentence: '請你坐在椅子上。' },
+  { char: '走', level: 1, radical: '走', bopomofo: 'ㄗㄡˇ', pinyin: 'zǒu', words: ['走向', '走出'], sentence: '我們一起走路上學。' },
+  { char: '看', level: 1, radical: '目', bopomofo: 'ㄎㄢˋ、ㄎㄢ', pinyin: 'kàn、kān', words: ['看到', '看見'], sentence: '我喜歡看故事書。' },
+  { char: '聽', level: 1, radical: '耳', bopomofo: 'ㄊㄧㄥ、ㄊㄧㄥˋ', pinyin: 'tīng、tìng', words: ['聽說', '聽到'], sentence: '請你仔細聽老師說話。' },
+  { char: '水', level: 1, radical: '水', bopomofo: 'ㄕㄨㄟˇ', pinyin: 'shuǐ', words: ['水平', '水產'], sentence: '不管天氣多熱，弟弟都要多喝水。' },
+  { char: '火', level: 1, radical: '火', bopomofo: 'ㄏㄨㄛˇ', pinyin: 'huǒ', words: ['火箭', '火山'], sentence: '如果看到火，就要趕快離開現場。' },
+  { char: '山', level: 1, radical: '山', bopomofo: 'ㄕㄢ', pinyin: 'shān', words: ['山東', '山地'], sentence: '即使山很高，我們也要努力爬上去。' },
+  { char: '肉', level: 1, radical: '肉', bopomofo: 'ㄖㄡˋ、ㄖㄨˋ', pinyin: 'ròu、rù', words: ['肌肉', '牛肉'], sentence: '晚餐有紅燒肉。' },
+  { char: '魚', level: 1, radical: '魚', bopomofo: 'ㄩˊ', pinyin: 'yú', words: ['魚類', '銀魚'], sentence: '因為河裡有魚，所以貓咪很想去看看。' },
+  { char: '鳥', level: 1, radical: '鳥', bopomofo: 'ㄋㄧㄠˇ、ㄉㄧㄠˇ', pinyin: 'niǎo、diǎo', words: ['鳥類', '鳥瞰'], sentence: '小鳥寧可自己找食物，也不要被關在籠子裡。' },
+  { char: '米', level: 1, radical: '米', bopomofo: 'ㄇㄧˇ', pinyin: 'mǐ', words: ['毫米', '千米'], sentence: '農夫在田裡種米。' },
+  { char: '蛋', level: 1, radical: '虫', bopomofo: 'ㄉㄢˋ', pinyin: 'dàn', words: ['雞蛋', '蛋白'], sentence: '我早餐吃了一顆蛋。' },
+  { char: '奶', level: 1, radical: '女', bopomofo: 'ㄋㄞˇ', pinyin: 'nǎi', words: ['奶奶', '牛奶'], sentence: '我每天早上喝牛奶。' },
+  { char: '麵', level: 1, radical: '麥', bopomofo: 'ㄇㄧㄢˋ', pinyin: 'miàn', words: ['吃麵', '麵包'], sentence: '我今天中午吃麵。' },
+  { char: '飯', level: 1, radical: '食', bopomofo: 'ㄈㄢˋ', pinyin: 'fàn', words: ['喫飯', '飯店'], sentence: '媽媽煮了好吃的飯。' },
+  { char: '包', level: 1, radical: '勹', bopomofo: 'ㄅㄠ', pinyin: 'bāo', words: ['包括', '包含'], sentence: '我背著書包上學。' },
+  { char: '菜', level: 1, radical: '艸', bopomofo: 'ㄘㄞˋ', pinyin: 'cài', words: ['蔬菜', '菜系'], sentence: '媽媽在市場買青菜。' },
+  { char: '瓜', level: 1, radical: '瓜', bopomofo: 'ㄍㄨㄚ', pinyin: 'guā', words: ['瓜分', '西瓜'], sentence: '夏天吃西瓜很消暑。' },
+  { char: '車', level: 1, radical: '車', bopomofo: 'ㄔㄜ、ㄐㄩ', pinyin: 'chē、jū', words: ['汽車', '車程'], sentence: '我們一起搭公車上學。' },
+  { char: '門', level: 1, radical: '門', bopomofo: 'ㄇㄣˊ', pinyin: 'mén', words: ['部門', '專門'], sentence: '請你把門關好。' },
+  { char: '燈', level: 1, radical: '火', bopomofo: 'ㄉㄥ', pinyin: 'dēng', words: ['燈光', '燈籠'], sentence: '請你打開電燈。' },
+  { char: '床', level: 1, radical: '广', bopomofo: 'ㄔㄨㄤˊ', pinyin: 'chuáng', words: ['起床', '床單'], sentence: '弟弟每天晚上睡在床上。' },
+  { char: '白', level: 1, radical: '白', bopomofo: 'ㄅㄞˊ、ㄅㄛˊ', pinyin: 'bái、bó', words: ['明白', '白色'], sentence: '雖然這隻兔子是白色的，但是眼睛紅紅的。' },
+  { char: '紅', level: 1, radical: '糸', bopomofo: 'ㄏㄨㄥˊ、ㄍㄨㄥ', pinyin: 'hóng、gōng', words: ['紅色', '紅軍'], sentence: '這朵花不但是紅色的，而且很香。' },
+  { char: '藍', level: 1, radical: '艸', bopomofo: 'ㄌㄢˊ', pinyin: 'lán', words: ['藍色', '藍天'], sentence: '今天的天空非常藍。' },
+  { char: '綠', level: 1, radical: '糸', bopomofo: 'ㄌㄩˋ、ㄌㄨˋ', pinyin: 'lǜ、lù', words: ['綠色', '綠化'], sentence: '公園裡種滿了綠色的草。' },
+  { char: '黃', level: 1, radical: '黃', bopomofo: 'ㄏㄨㄤˊ', pinyin: 'huáng', words: ['黃河', '黃金'], sentence: '秋天的葉子變成黃色。' },
+  { char: '黑', level: 1, radical: '黑', bopomofo: 'ㄏㄟ、ㄏㄜˋ、ㄏㄟˇ', pinyin: 'hēi、hè、hěi', words: ['黑暗', '黑色'], sentence: '夜晚的天空是黑色的。' },
+  { char: '牛', level: 1, radical: '牛', bopomofo: 'ㄋㄧㄡˊ', pinyin: 'niú', words: ['牛肉', '牛奶'], sentence: '這頭牛既高大又溫馴。' },
+  { char: '羊', level: 1, radical: '羊', bopomofo: 'ㄧㄤˊ、ㄒㄧㄤˊ', pinyin: 'yáng、xiáng', words: ['羊皮', '羊肉'], sentence: '農場裡養了幾隻羊。' },
+  { char: '狗', level: 1, radical: '犬', bopomofo: 'ㄍㄡˇ', pinyin: 'gǒu', words: ['搜狗', '走狗'], sentence: '這不是一隻貓，而是一隻小狗。' },
+  { char: '貓', level: 1, radical: '豸', bopomofo: 'ㄇㄠ', pinyin: 'māo', words: ['熊貓', '野貓'], sentence: '只要輕輕摸貓咪，牠就會發出呼嚕聲。' },
+  { char: '馬', level: 1, radical: '馬', bopomofo: 'ㄇㄚˇ', pinyin: 'mǎ', words: ['人馬', '羅馬'], sentence: '除非練習很久，才能學會騎馬。' },
+  { char: '也', level: 2, radical: '乙', bopomofo: 'ㄧㄝˇ', pinyin: 'yě', words: ['也許', '再也'], sentence: '即使很累，妹妹也堅持畫完整幅畫。' },
+  { char: '就', level: 2, radical: '尢', bopomofo: 'ㄐㄧㄡˋ', pinyin: 'jiù', words: ['就是', '就業'], sentence: '我做完功課就去玩。' },
+  { char: '出', level: 2, radical: '凵', bopomofo: 'ㄔㄨ', pinyin: 'chū', words: ['出來', '出現'], sentence: '太陽公公出來了。' },
+  { char: '會', level: 2, radical: '曰', bopomofo: 'ㄏㄨㄟˋ、ㄏㄨㄟˇ、ㄎㄨㄞˋ、ㄍㄨㄟˋ', pinyin: 'huì、huǐ、kuài、guì', words: ['社會', '會議'], sentence: '你會不會游泳？' },
+  { char: '可', level: 2, radical: '口', bopomofo: 'ㄎㄜˇ、ㄎㄜˋ', pinyin: 'kě、kè', words: ['可以', '可能'], sentence: '這件事你可以做到。' },
+  { char: '對', level: 2, radical: '寸', bopomofo: 'ㄉㄨㄟˋ', pinyin: 'duì', words: ['對於', '反對'], sentence: '這不是你的錯，而是大家都要面對的問題。' },
+  { char: '生', level: 2, radical: '生', bopomofo: 'ㄕㄥ', pinyin: 'shēng', words: ['生產', '生活'], sentence: '醫生正在幫病人看病。' },
+  { char: '能', level: 2, radical: '肉', bopomofo: 'ㄋㄥˊ', pinyin: 'néng', words: ['不能', '可能'], sentence: '你能不能幫我一下？' },
+  { char: '著', level: 2, radical: '艸', bopomofo: 'ㄓㄨˋ、ㄓㄨㄛˊ、ㄓㄠˊ、ㄓㄠ、˙ㄓㄜ', pinyin: 'zhù、zhuó、zháo、zhāo、zhe', words: ['著名', '著作'], sentence: '他正拿著一本書看。' },
+  { char: '自', level: 2, radical: '自', bopomofo: 'ㄗˋ', pinyin: 'zì', words: ['自己', '自然'], sentence: '他自己整理房間。' },
+  { char: '之', level: 2, radical: '丿', bopomofo: 'ㄓ', pinyin: 'zhī', words: ['之間', '之一'], sentence: '只要下課之後複習，就能記得更牢。' },
+  { char: '年', level: 2, radical: '干', bopomofo: 'ㄋㄧㄢˊ', pinyin: 'nián', words: ['年代', '每年'], sentence: '今年是我最快樂的一年。' },
+  { char: '後', level: 2, radical: '彳', bopomofo: 'ㄏㄡˋ', pinyin: 'hòu', words: ['以後', '之後'], sentence: '放學後我去圖書館看書。' },
+  { char: '前', level: 2, radical: '刀', bopomofo: 'ㄑㄧㄢˊ', pinyin: 'qián', words: ['目前', '以前'], sentence: '請你站在前面一點。' },
+  { char: '回', level: 2, radical: '囗', bopomofo: 'ㄏㄨㄟˊ', pinyin: 'huí', words: ['回來', '回答'], sentence: '放學後我馬上回家。' },
+  { char: '入', level: 2, radical: '入', bopomofo: 'ㄖㄨˋ、ㄖˋ、ㄖㄨˇ', pinyin: 'rù、rì、rǔ', words: ['進入', '收入'], sentence: '除非先敲門，才能進入教室。' },
+  { char: '內', level: 2, radical: '入', bopomofo: 'ㄋㄟˋ、ㄋㄚˋ', pinyin: 'nèi、nà', words: ['內容', '國內'], sentence: '教室內非常安靜。' },
+  { char: '外', level: 2, radical: '夕', bopomofo: 'ㄨㄞˋ', pinyin: 'wài', words: ['另外', '此外'], sentence: '我們去戶外玩球。' },
+  { char: '本', level: 2, radical: '木', bopomofo: 'ㄅㄣˇ', pinyin: 'běn', words: ['日本', '基本'], sentence: '這本故事書很有趣。' },
+  { char: '日', level: 2, radical: '日', bopomofo: 'ㄖˋ、ㄇㄧˋ', pinyin: 'rì、mì', words: ['日本', '今日'], sentence: '今天是個晴朗的日子。' },
+  { char: '月', level: 2, radical: '月', bopomofo: 'ㄩㄝˋ', pinyin: 'yuè', words: ['日月', '月份'], sentence: '不管是哪個月份，媽媽都會記得我的生日。' },
+  { char: '星', level: 2, radical: '日', bopomofo: 'ㄒㄧㄥ', pinyin: 'xīng', words: ['衛星', '明星'], sentence: '夜晚天空有很多星星。' },
+  { char: '光', level: 2, radical: '儿', bopomofo: 'ㄍㄨㄤ', pinyin: 'guāng', words: ['陽光', '目光'], sentence: '陽光從窗戶照進來。' },
+  { char: '亮', level: 2, radical: '亠', bopomofo: 'ㄌㄧㄤˋ、ㄌㄧㄤˊ', pinyin: 'liàng、liáng', words: ['點亮', '漂亮'], sentence: '教室的燈很明亮。' },
+  { char: '早', level: 2, radical: '日', bopomofo: 'ㄗㄠˇ', pinyin: 'zǎo', words: ['早已', '最早'], sentence: '我每天早上都運動。' },
+  { char: '晚', level: 2, radical: '日', bopomofo: 'ㄨㄢˇ', pinyin: 'wǎn', words: ['晚上', '今晚'], sentence: '如果太晚睡覺，就會影響隔天的精神。' },
+  { char: '昨', level: 2, radical: '日', bopomofo: 'ㄗㄨㄛˊ', pinyin: 'zuó', words: ['昨天', '昨日'], sentence: '昨天我去了動物園。' },
+  { char: '今', level: 2, radical: '人', bopomofo: 'ㄐㄧㄣ', pinyin: 'jīn', words: ['今天', '今日'], sentence: '今天天氣真的很好。' },
+  { char: '明', level: 2, radical: '日', bopomofo: 'ㄇㄧㄥˊ', pinyin: 'míng', words: ['明白', '明顯'], sentence: '明天我們要去郊遊。' },
+  { char: '幾', level: 2, radical: '幺', bopomofo: 'ㄐㄧˇ、ㄐㄧ', pinyin: 'jǐ、jī', words: ['幾個', '幾乎'], sentence: '你想要買幾顆蘋果？' },
+  { char: '少', level: 2, radical: '小', bopomofo: 'ㄕㄠˇ、ㄕㄠˋ', pinyin: 'shǎo、shào', words: ['多少', '不少'], sentence: '即使糖果剩得很少，他也願意分給朋友。' },
+  { char: '高', level: 2, radical: '高', bopomofo: 'ㄍㄠ', pinyin: 'gāo', words: ['提高', '最高'], sentence: '那棵樹長得非常高大。' },
+  { char: '低', level: 2, radical: '人', bopomofo: 'ㄉㄧ', pinyin: 'dī', words: ['降低', '低聲'], sentence: '請把音量調低一點。' },
+  { char: '長', level: 2, radical: '長', bopomofo: 'ㄔㄤˊ、ㄓㄤˇ、ㄓㄤˋ', pinyin: 'cháng、zhǎng、zhàng', words: ['增長', '長江'], sentence: '弟弟長高了不少。' },
+  { char: '短', level: 2, radical: '矢', bopomofo: 'ㄉㄨㄢˇ', pinyin: 'duǎn', words: ['短期', '縮短'], sentence: '這條繩子太短了。' },
+  { char: '寬', level: 2, radical: '宀', bopomofo: 'ㄎㄨㄢ', pinyin: 'kuān', words: ['寬闊', '寬廣'], sentence: '因為這條路很寬，所以車子可以順利通行。' },
+  { char: '窄', level: 2, radical: '穴', bopomofo: 'ㄓㄞˇ、ㄗㄜˊ', pinyin: 'zhǎi、zé', words: ['狹窄', '窄小'], sentence: '這條巷子非常狹窄。' },
+  { char: '胖', level: 2, radical: '肉', bopomofo: 'ㄆㄤˋ、ㄆㄢˊ', pinyin: 'pàng、pán', words: ['胖子', '肥胖'], sentence: '小狗吃得胖胖的。' },
+  { char: '瘦', level: 2, radical: '疒', bopomofo: 'ㄕㄡˋ', pinyin: 'shòu', words: ['瘦子', '消瘦'], sentence: '他跑步跑得很瘦。' },
+  { char: '粗', level: 2, radical: '米', bopomofo: 'ㄘㄨ', pinyin: 'cū', words: ['粗大', '粗糙'], sentence: '這根樹枝很粗壯。' },
+  { char: '細', level: 2, radical: '糸', bopomofo: 'ㄒㄧˋ', pinyin: 'xì', words: ['細胞', '仔細'], sentence: '我寧可仔細一點慢慢寫，也不要粗心寫錯字。' },
+  { char: '快', level: 2, radical: '心', bopomofo: 'ㄎㄨㄞˋ', pinyin: 'kuài', words: ['很快', '快速'], sentence: '請你動作快一點。' },
+  { char: '慢', level: 2, radical: '心', bopomofo: 'ㄇㄢˋ', pinyin: 'màn', words: ['慢慢', '緩慢'], sentence: '老爺爺走路很慢。' },
+  { char: '舊', level: 2, radical: '臼', bopomofo: 'ㄐㄧㄡˋ', pinyin: 'jiù', words: ['仍舊', '依舊'], sentence: '這件衣服已經舊了。' },
+  { char: '新', level: 2, radical: '斤', bopomofo: 'ㄒㄧㄣ', pinyin: 'xīn', words: ['新聞', '重新'], sentence: '我買了一雙新鞋子。' },
+  { char: '齊', level: 2, radical: '齊', bopomofo: 'ㄑㄧˊ、ㄓㄞ、ㄐㄧˋ、ㄗ', pinyin: 'qí、zhāi、jì、zī', words: ['一齊', '齊聲'], sentence: '雖然桌上的東西擺得不太整齊，但是他還是很快找到了。' },
+  { char: '差', level: 2, radical: '工', bopomofo: 'ㄔㄚ、ㄔㄚˋ、ㄔㄞ、ㄔㄞˋ、ㄘ、ㄘㄨㄛ', pinyin: 'chā、chà、chāi、chài、cī、cuō', words: ['差別', '差異'], sentence: '這兩個答案差不多。' },
+  { char: '錯', level: 2, radical: '金', bopomofo: 'ㄘㄨㄛˋ、ㄘㄨˋ', pinyin: 'cuò、cù', words: ['錯誤', '不錯'], sentence: '這一題我寫錯了。' },
+  { char: '左', level: 2, radical: '工', bopomofo: 'ㄗㄨㄛˇ', pinyin: 'zuǒ', words: ['左右', '左手'], sentence: '請往左邊走。' },
+  { char: '右', level: 2, radical: '口', bopomofo: 'ㄧㄡˋ', pinyin: 'yòu', words: ['左右', '右手'], sentence: '郵局在右邊那條路。' },
+  { char: '頂', level: 2, radical: '頁', bopomofo: 'ㄉㄧㄥˇ', pinyin: 'dǐng', words: ['頭頂', '屋頂'], sentence: '這頂帽子不但好看，而且很保暖。' },
+  { char: '底', level: 2, radical: '广', bopomofo: 'ㄉㄧˇ、˙ㄉㄜ', pinyin: 'dǐ、de', words: ['到底', '年底'], sentence: '鑰匙掉到抽屜底下了。' },
+  { char: '邊', level: 2, radical: '辵', bopomofo: 'ㄅㄧㄢ', pinyin: 'biān', words: ['一邊', '身邊'], sentence: '小狗在河邊玩耍。' },
+  { char: '旁', level: 2, radical: '方', bopomofo: 'ㄆㄤˊ、ㄅㄤˋ', pinyin: 'páng、bàng', words: ['旁邊', '旁人'], sentence: '學校旁邊有一間書店。' },
+  { char: '角', level: 2, radical: '角', bopomofo: 'ㄐㄧㄠˇ、ㄐㄩㄝˊ、ㄌㄨˋ', pinyin: 'jiǎo、jué、lù', words: ['角度', '角色'], sentence: '桌子的角撞到我的腳。' },
+  { char: '裡', level: 2, radical: '衣', bopomofo: 'ㄌㄧˇ', pinyin: 'lǐ', words: ['裡面', '心裡'], sentence: '房間裡既乾淨又整齊。' },
+  { char: '處', level: 2, radical: '虍', bopomofo: 'ㄔㄨˋ、ㄔㄨˇ', pinyin: 'chù、chǔ', words: ['處理', '處於'], sentence: '公園裡到處都是花。' },
+  { char: '心', level: 2, radical: '心', bopomofo: 'ㄒㄧㄣ', pinyin: 'xīn', words: ['中心', '心中'], sentence: '她的心地非常善良。' },
+  { char: '手', level: 2, radical: '手', bopomofo: 'ㄕㄡˇ', pinyin: 'shǒu', words: ['手段', '手中'], sentence: '請舉手回答問題。' },
+  { char: '腳', level: 2, radical: '肉', bopomofo: 'ㄐㄧㄠˇ、ㄐㄩㄝˊ', pinyin: 'jiǎo、jué', words: ['腳步', '腳下'], sentence: '我的腳有點痠痛。' },
+  { char: '頭', level: 2, radical: '頁', bopomofo: 'ㄊㄡˊ、˙ㄊㄡ', pinyin: 'tóu、tou', words: ['寡頭', '點頭'], sentence: '這不是尾巴，而是牠的頭。' },
+  { char: '臉', level: 2, radical: '肉', bopomofo: 'ㄌㄧㄢˇ', pinyin: 'liǎn', words: ['臉上', '臉色'], sentence: '她的臉紅紅的。' },
+  { char: '眼', level: 2, radical: '目', bopomofo: 'ㄧㄢˇ', pinyin: 'yǎn', words: ['眼睛', '一眼'], sentence: '請閉上你的眼睛。' },
+  { char: '睛', level: 2, radical: '目', bopomofo: 'ㄐㄧㄥ', pinyin: 'jīng', words: ['眼睛', '定睛'], sentence: '他的眼睛又大又亮。' },
+  { char: '耳', level: 2, radical: '耳', bopomofo: 'ㄦˇ', pinyin: 'ěr', words: ['耳朵', '耳邊'], sentence: '請你用耳朵仔細聽。' },
+  { char: '鼻', level: 2, radical: '鼻', bopomofo: 'ㄅㄧˊ', pinyin: 'bí', words: ['鼻子', '鼻孔'], sentence: '只要摀住鼻子，就能減少難聞的味道。' },
+  { char: '嘴', level: 2, radical: '口', bopomofo: 'ㄗㄨㄟˇ', pinyin: 'zuǐ', words: ['嘴裏', '嘴脣'], sentence: '他嘴巴裡含著糖果。' },
+  { char: '牙', level: 2, radical: '牙', bopomofo: 'ㄧㄚˊ', pinyin: 'yá', words: ['牙齒', '金牙'], sentence: '睡前要記得刷牙。' },
+  { char: '舌', level: 2, radical: '舌', bopomofo: 'ㄕㄜˊ', pinyin: 'shé', words: ['舌頭', '口舌'], sentence: '冰淇淋讓我的舌頭發麻。' },
+  { char: '眉', level: 2, radical: '目', bopomofo: 'ㄇㄟˊ', pinyin: 'méi', words: ['眉頭', '眉毛'], sentence: '她皺著眉頭在思考。' },
+  { char: '膚', level: 2, radical: '肉', bopomofo: 'ㄈㄨ', pinyin: 'fū', words: ['皮膚', '肌膚'], sentence: '除非擦上乳液，皮膚才不會乾燥。' },
+  { char: '骨', level: 2, radical: '骨', bopomofo: 'ㄍㄨˇ、ㄍㄨ、ㄍㄨˊ', pinyin: 'gǔ、gū、gú', words: ['骨幹', '骨頭'], sentence: '跌倒讓他的骨頭受傷。' },
+  { char: '汁', level: 2, radical: '水', bopomofo: 'ㄓ', pinyin: 'zhī', words: ['茄汁', '乳汁'], sentence: '我喜歡喝新鮮果汁。' },
+  { char: '糖', level: 2, radical: '米', bopomofo: 'ㄊㄤˊ', pinyin: 'táng', words: ['製糖', '蔗糖'], sentence: '弟弟愛吃甜甜的糖果。' },
+  { char: '鹽', level: 2, radical: '鹵', bopomofo: 'ㄧㄢˋ、ㄧㄢˊ', pinyin: 'yàn、yán', words: ['食鹽', '岩鹽'], sentence: '煮湯要加一點鹽巴。' },
+  { char: '醋', level: 2, radical: '酉', bopomofo: 'ㄘㄨˋ、ㄗㄨㄛˋ', pinyin: 'cù、zuò', words: ['喫醋', '醋意'], sentence: '不管加多少醋，這道菜都還是很好吃。' },
+  { char: '茶', level: 2, radical: '艸', bopomofo: 'ㄔㄚˊ', pinyin: 'chá', words: ['茶葉', '名茶'], sentence: '爺爺喜歡喝熱茶。' },
+  { char: '豆', level: 2, radical: '豆', bopomofo: 'ㄉㄡˋ', pinyin: 'dòu', words: ['豆腐', '豌豆'], sentence: '我喜歡吃綠豆湯。' },
+  { char: '蔥', level: 2, radical: '艸', bopomofo: 'ㄘㄨㄥ', pinyin: 'cōng', words: ['青蔥', '洋蔥'], sentence: '媽媽在切蔥花。' },
+  { char: '蒜', level: 2, radical: '艸', bopomofo: 'ㄙㄨㄢˋ', pinyin: 'suàn', words: ['大蒜', '蒜頭'], sentence: '這道菜加了很多大蒜。' },
+  { char: '湯', level: 2, radical: '水', bopomofo: 'ㄊㄤ、ㄕㄤ', pinyin: 'tāng、shāng', words: ['雞湯', '菜湯'], sentence: '如果湯太燙，就要小心慢慢喝。' },
+  { char: '餅', level: 2, radical: '食', bopomofo: 'ㄅㄧㄥˇ', pinyin: 'bǐng', words: ['燒餅', '餅乾'], sentence: '奶奶烤了好吃的餅乾。' },
+  { char: '糕', level: 2, radical: '米', bopomofo: 'ㄍㄠ', pinyin: 'gāo', words: ['糟糕', '蛋糕'], sentence: '今天是姐姐的生日蛋糕。' },
+  { char: '鍋', level: 2, radical: '金', bopomofo: 'ㄍㄨㄛ', pinyin: 'guō', words: ['鍋巴', '下鍋'], sentence: '媽媽用鍋子煮麵。' },
+  { char: '碗', level: 2, radical: '石', bopomofo: 'ㄨㄢˇ', pinyin: 'wǎn', words: ['一碗', '飯碗'], sentence: '請幫我拿一個碗。' },
+  { char: '筷', level: 2, radical: '竹', bopomofo: 'ㄎㄨㄞˋ', pinyin: 'kuài', words: ['筷子', '碗筷'], sentence: '即使還不太會用筷子，妹妹也努力練習。' },
+  { char: '匙', level: 2, radical: '匕', bopomofo: 'ㄔˊ、˙ㄕ', pinyin: 'chí、shi', words: ['鑰匙', '湯匙'], sentence: '請用湯匙喝湯。' },
+  { char: '刀', level: 2, radical: '刀', bopomofo: 'ㄉㄠ', pinyin: 'dāo', words: ['一刀', '大刀'], sentence: '切水果要小心用刀。' },
+  { char: '叉', level: 2, radical: '又', bopomofo: 'ㄔㄚ、ㄔㄚˊ、ㄔㄚˇ', pinyin: 'chā、chá、chǎ', words: ['交叉', '三叉'], sentence: '吃牛排要用叉子。' },
+  { char: '盒', level: 2, radical: '皿', bopomofo: 'ㄏㄜˊ', pinyin: 'hé', words: ['盒子', '木盒'], sentence: '鉛筆放在鉛筆盒裡。' },
+  { char: '盆', level: 2, radical: '皿', bopomofo: 'ㄆㄣˊ', pinyin: 'pén', words: ['盆地', '一盆'], sentence: '因為花盆需要陽光，所以媽媽把它放在窗邊。' },
+  { char: '杯', level: 2, radical: '木', bopomofo: 'ㄅㄟ', pinyin: 'bēi', words: ['一杯', '酒杯'], sentence: '請幫我倒一杯水。' },
+  { char: '櫃', level: 2, radical: '木', bopomofo: 'ㄍㄨㄟˋ', pinyin: 'guì', words: ['掌櫃', '櫃檯'], sentence: '衣服放在衣櫃裡。' },
+  { char: '桌', level: 2, radical: '木', bopomofo: 'ㄓㄨㄛ', pinyin: 'zhuō', words: ['桌上', '桌子'], sentence: '請把書放回書桌上。' },
+  { char: '椅', level: 2, radical: '木', bopomofo: 'ㄧˇ、ㄧ', pinyin: 'yǐ、yī', words: ['椅子', '桌椅'], sentence: '這張椅子坐起來很舒服。' },
+  { char: '窗', level: 2, radical: '穴', bopomofo: 'ㄔㄨㄤ', pinyin: 'chuāng', words: ['窗口', '窗外'], sentence: '我寧可開窗透透氣，也不要一直悶在房間裡。' },
+  { char: '房', level: 2, radical: '戶', bopomofo: 'ㄈㄤˊ', pinyin: 'fáng', words: ['房子', '房間'], sentence: '我的房間非常整潔。' },
+  { char: '屋', level: 2, radical: '尸', bopomofo: 'ㄨ', pinyin: 'wū', words: ['屋裏', '房屋'], sentence: '爺爺住在一間老房屋裡。' },
+  { char: '牆', level: 2, radical: '爿', bopomofo: 'ㄑㄧㄤˊ', pinyin: 'qiáng', words: ['城牆', '牆上'], sentence: '牆壁上掛著一幅畫。' },
+  { char: '街', level: 2, radical: '行', bopomofo: 'ㄐㄧㄝ', pinyin: 'jiē', words: ['街道', '大街'], sentence: '這條街上有很多商店。' },
+  { char: '路', level: 2, radical: '足', bopomofo: 'ㄌㄨˋ', pinyin: 'lù', words: ['鐵路', '公路'], sentence: '雖然這條路比較遠，但是風景很漂亮。' },
+  { char: '橋', level: 2, radical: '木', bopomofo: 'ㄑㄧㄠˊ', pinyin: 'qiáo', words: ['大橋', '橋樑'], sentence: '我們走過一座小橋。' },
+  { char: '鐘', level: 2, radical: '金', bopomofo: 'ㄓㄨㄥ', pinyin: 'zhōng', words: ['分鐘', '編鐘'], sentence: '教室的時鐘停了。' },
+  { char: '筆', level: 2, radical: '竹', bopomofo: 'ㄅㄧˇ', pinyin: 'bǐ', words: ['筆架', '一筆'], sentence: '我的鉛筆不見了。' },
+  { char: '畫', level: 2, radical: '田', bopomofo: 'ㄏㄨㄚˋ', pinyin: 'huà', words: ['畫家', '繪畫'], sentence: '她喜歡畫圖畫畫。' },
+  { char: '書', level: 2, radical: '曰', bopomofo: 'ㄕㄨ', pinyin: 'shū', words: ['書記', '尚書'], sentence: '這本書不但有趣，而且還能學到新知識。' },
+  { char: '紙', level: 2, radical: '糸', bopomofo: 'ㄓˇ', pinyin: 'zhǐ', words: ['報紙', '造紙'], sentence: '請拿一張紙給我。' },
+  { char: '字', level: 2, radical: '子', bopomofo: 'ㄗˋ', pinyin: 'zì', words: ['名字', '數字'], sentence: '老師教我們寫生字。' },
+  { char: '號', level: 2, radical: '虍', bopomofo: 'ㄏㄠˋ、ㄏㄠˊ', pinyin: 'hào、háo', words: ['稱號', '信號'], sentence: '這是我的座號。' },
+  { char: '歌', level: 2, radical: '欠', bopomofo: 'ㄍㄜ', pinyin: 'gē', words: ['詩歌', '歌曲'], sentence: '我們一起唱一首歌。' },
+  { char: '唱', level: 2, radical: '口', bopomofo: 'ㄔㄤˋ', pinyin: 'chàng', words: ['演唱', '歌唱'], sentence: '姐姐既會唱歌，又會彈鋼琴。' },
+  { char: '舞', level: 2, radical: '舛', bopomofo: 'ㄨˇ', pinyin: 'wǔ', words: ['舞蹈', '舞臺'], sentence: '姐姐正在練習跳舞。' },
+  { char: '戲', level: 2, radical: '戈', bopomofo: 'ㄒㄧˋ、ㄏㄨ、ㄏㄨㄟ', pinyin: 'xì、hū、huī', words: ['遊戲', '戲劇'], sentence: '我們去看了一場戲劇。' },
+  { char: '拍', level: 2, radical: '手', bopomofo: 'ㄆㄞ、ㄆㄛˋ、ㄆㄚ、ㄅㄛˊ', pinyin: 'pāi、pò、pā、bó', words: ['拍攝', '拍賣'], sentence: '大家一起拍手鼓掌。' },
+  { char: '打', level: 2, radical: '手', bopomofo: 'ㄉㄚˇ、ㄉㄚˊ', pinyin: 'dǎ、dá', words: ['打擊', '打開'], sentence: '我們去打籃球吧。' },
+  { char: '拿', level: 2, radical: '手', bopomofo: 'ㄋㄚˊ', pinyin: 'ná', words: ['拿出', '拿到'], sentence: '這不是弟弟拿走的，而是被風吹走的。' },
+  { char: '丟', level: 2, radical: '一', bopomofo: 'ㄉㄧㄡ', pinyin: 'diū', words: ['丟失', '丟下'], sentence: '請把垃圾丟進垃圾桶。' },
+  { char: '抓', level: 2, radical: '手', bopomofo: 'ㄓㄨㄚ、ㄓㄠ、ㄔㄨㄚˇ', pinyin: 'zhuā、zhāo、chuǎ', words: ['抓住', '抓緊'], sentence: '貓咪抓到了一隻老鼠。' },
+  { char: '抱', level: 2, radical: '手', bopomofo: 'ㄅㄠˋ', pinyin: 'bào', words: ['抱住', '抱怨'], sentence: '媽媽抱起哭泣的妹妹。' },
+  { char: '跑', level: 2, radical: '足', bopomofo: 'ㄆㄠˇ、ㄆㄠˊ', pinyin: 'pǎo、páo', words: ['逃跑', '奔跑'], sentence: '我們在操場上跑步。' },
+  { char: '跳', level: 2, radical: '足', bopomofo: 'ㄊㄧㄠˋ', pinyin: 'tiào', words: ['跳槽', '跳出'], sentence: '只要練習跳繩，體力就會慢慢變好。' },
+  { char: '踩', level: 2, radical: '足', bopomofo: 'ㄘㄞˇ', pinyin: 'cǎi', words: ['踩踏', '踩點'], sentence: '不要踩到別人的腳。' },
+  { char: '踏', level: 2, radical: '足', bopomofo: 'ㄊㄚˋ', pinyin: 'tà', words: ['踏上', '踏實'], sentence: '我們一步一步踏上樓梯。' },
+  { char: '爬', level: 2, radical: '爪', bopomofo: 'ㄆㄚˊ', pinyin: 'pá', words: ['爬行', '上爬'], sentence: '我們星期天一起去爬山。' },
+  { char: '睡', level: 2, radical: '目', bopomofo: 'ㄕㄨㄟˋ', pinyin: 'shuì', words: ['睡覺', '睡眠'], sentence: '弟弟每天很早睡覺。' },
+  { char: '哭', level: 2, radical: '口', bopomofo: 'ㄎㄨ', pinyin: 'kū', words: ['大哭', '哭聲'], sentence: '除非真的很傷心，妹妹才會哭出來。' },
+  { char: '笑', level: 2, radical: '竹', bopomofo: 'ㄒㄧㄠˋ', pinyin: 'xiào', words: ['微笑', '冷笑'], sentence: '他笑得非常開心。' },
+  { char: '叫', level: 2, radical: '口', bopomofo: 'ㄐㄧㄠˋ', pinyin: 'jiào', words: ['叫做', '大叫'], sentence: '媽媽在叫我回家吃飯。' },
+  { char: '喊', level: 2, radical: '口', bopomofo: 'ㄏㄢˇ', pinyin: 'hǎn', words: ['吶喊', '喊聲'], sentence: '他大聲喊出朋友的名字。' },
+  { char: '吞', level: 2, radical: '口', bopomofo: 'ㄊㄨㄣ', pinyin: 'tūn', words: ['吞併', '吞噬'], sentence: '吃東西要細嚼慢嚥不要吞太快。' },
+  { char: '吐', level: 2, radical: '口', bopomofo: 'ㄊㄨˇ、ㄊㄨˋ', pinyin: 'tǔ、tù', words: ['吐蕃', '嘔吐'], sentence: '不管吃了什麼，弟弟都要小心不要嘔吐。' },
+  { char: '咬', level: 2, radical: '口', bopomofo: 'ㄧㄠˇ、ㄐㄧㄠ', pinyin: 'yǎo、jiāo', words: ['咬牙', '咬傷'], sentence: '小狗喜歡咬玩具骨頭。' },
+  { char: '吹', level: 2, radical: '口', bopomofo: 'ㄔㄨㄟ、ㄔㄨㄟˋ', pinyin: 'chuī、chuì', words: ['鼓吹', '吹燈'], sentence: '風輕輕吹過樹梢。' },
+  { char: '吸', level: 2, radical: '口', bopomofo: 'ㄒㄧ', pinyin: 'xī', words: ['吸收', '吸引'], sentence: '請深深吸一口氣。' },
+  { char: '怕', level: 2, radical: '心', bopomofo: 'ㄆㄚˋ', pinyin: 'pà', words: ['害怕', '恐怕'], sentence: '妹妹很怕黑暗的房間。' },
+  { char: '喜', level: 2, radical: '口', bopomofo: 'ㄒㄧˇ', pinyin: 'xǐ', words: ['喜歡', '歡喜'], sentence: '如果他喜歡這本書，就會一直反覆閱讀。' },
+  { char: '氣', level: 2, radical: '气', bopomofo: 'ㄑㄧˋ', pinyin: 'qì', words: ['氣候', '空氣'], sentence: '他生氣地跺了跺腳。' },
+  { char: '壞', level: 2, radical: '土', bopomofo: 'ㄏㄨㄞˋ、ㄍㄨㄞˋ', pinyin: 'huài、guài', words: ['破壞', '壞人'], sentence: '我的玩具壞掉了。' },
+  { char: '飽', level: 2, radical: '食', bopomofo: 'ㄅㄠˇ', pinyin: 'bǎo', words: ['飽和', '溫飽'], sentence: '吃完飯我覺得很飽。' },
+  { char: '餓', level: 2, radical: '食', bopomofo: 'ㄜˋ', pinyin: 'è', words: ['餓死', '飢餓'], sentence: '運動後我覺得很餓。' },
+  { char: '渴', level: 2, radical: '水', bopomofo: 'ㄎㄜˇ、ㄐㄧㄝˊ、ㄏㄜˊ', pinyin: 'kě、jié、hé', words: ['渴望', '口渴'], sentence: '即使不覺得口渴，也要記得多喝水。' },
+  { char: '痛', level: 2, radical: '疒', bopomofo: 'ㄊㄨㄥˋ', pinyin: 'tòng', words: ['痛苦', '疼痛'], sentence: '他不小心跌倒膝蓋很痛。' },
+  { char: '癢', level: 2, radical: '疒', bopomofo: 'ㄧㄤˇ', pinyin: 'yǎng', words: ['癢癢', '瘙癢'], sentence: '蚊子咬得我全身發癢。' },
+  { char: '毒', level: 2, radical: '毋', bopomofo: 'ㄉㄨˊ', pinyin: 'dú', words: ['病毒', '中毒'], sentence: '請不要亂吃有毒的植物。' },
+  { char: '鬼', level: 2, radical: '鬼', bopomofo: 'ㄍㄨㄟˇ', pinyin: 'guǐ', words: ['鬼子', '魔鬼'], sentence: '弟弟喜歡聽鬼故事。' },
+  { char: '奇', level: 2, radical: '大', bopomofo: 'ㄑㄧˊ、ㄐㄧ', pinyin: 'qí、jī', words: ['奇怪', '奇特'], sentence: '因為這個故事很奇特，所以大家都想聽。' },
+  { char: '乖', level: 2, radical: '丿', bopomofo: 'ㄍㄨㄞ', pinyin: 'guāi', words: ['乖乖', '乖巧'], sentence: '妹妹是個乖巧的孩子。' },
+  { char: '巧', level: 2, radical: '工', bopomofo: 'ㄑㄧㄠˇ', pinyin: 'qiǎo', words: ['技巧', '精巧'], sentence: '她做的手工藝品很精巧。' },
+  { char: '傻', level: 2, radical: '人', bopomofo: 'ㄕㄚˇ', pinyin: 'shǎ', words: ['傻子', '傻瓜'], sentence: '他做了一件很傻的事。' },
+  { char: '嫩', level: 2, radical: '女', bopomofo: 'ㄋㄣˋ', pinyin: 'nèn', words: ['鮮嫩', '細嫩'], sentence: '春天的嫩芽長出來了。' },
+  { char: '幼', level: 2, radical: '幺', bopomofo: 'ㄧㄡˋ', pinyin: 'yòu', words: ['自幼', '幼蟲'], sentence: '我寧可留在幼兒園多學習，也不要太快長大。' },
+  { char: '老', level: 2, radical: '老', bopomofo: 'ㄌㄠˇ', pinyin: 'lǎo', words: ['老師', '老人'], sentence: '老師教我們寫生字。' },
+  { char: '伯', level: 2, radical: '人', bopomofo: 'ㄅㄛˊ、ㄅㄞˇ、ㄅㄚˋ', pinyin: 'bó、bǎi、bà', words: ['伯伯', '伯爵'], sentence: '隔壁的伯伯很親切。' },
+  { char: '爺', level: 2, radical: '父', bopomofo: 'ㄧㄝˊ', pinyin: 'yé', words: ['老爺', '爺爺'], sentence: '爺爺喜歡在院子澆花。' },
+  { char: '婆', level: 2, radical: '女', bopomofo: 'ㄆㄛˊ', pinyin: 'pó', words: ['老婆', '婆婆'], sentence: '外婆做的菜非常好吃。' },
+  { char: '姑', level: 2, radical: '女', bopomofo: 'ㄍㄨ', pinyin: 'gū', words: ['姑娘', '姑姑'], sentence: '雖然姑姑住得很遠，但是常常打電話關心我們。' },
+  { char: '姨', level: 2, radical: '女', bopomofo: 'ㄧˊ', pinyin: 'yí', words: ['阿姨', '姨媽'], sentence: '阿姨送我一份生日禮物。' },
+  { char: '叔', level: 2, radical: '又', bopomofo: 'ㄕㄨˊ', pinyin: 'shú', words: ['叔叔', '叔惠'], sentence: '叔叔開車帶我們去郊遊。' },
+  { char: '兄', level: 2, radical: '儿', bopomofo: 'ㄒㄩㄥ', pinyin: 'xiōng', words: ['兄弟', '弟兄'], sentence: '我的哥哥是個好兄長。' },
+  { char: '伴', level: 2, radical: '人', bopomofo: 'ㄅㄢˋ', pinyin: 'bàn', words: ['夥伴', '伴隨'], sentence: '她是我最好的玩伴。' },
+  { char: '友', level: 2, radical: '又', bopomofo: 'ㄧㄡˇ', pinyin: 'yǒu', words: ['朋友', '友好'], sentence: '他不但是我的同學，而且還是我最好的朋友。' },
+  { char: '鄰', level: 2, radical: '邑', bopomofo: 'ㄌㄧㄣˊ', pinyin: 'lín', words: ['鄰近', '鄰居'], sentence: '隔壁鄰居送我們水果。' },
+  { char: '兵', level: 2, radical: '八', bopomofo: 'ㄅㄧㄥ', pinyin: 'bīng', words: ['士兵', '官兵'], sentence: '公園裡站著一位士兵。' },
+  { char: '黨', level: 2, radical: '黑', bopomofo: 'ㄉㄤˇ', pinyin: 'dǎng', words: ['政黨', '黨員'], sentence: '爸爸關心政黨的新聞。' },
+  { char: '民', level: 2, radical: '氏', bopomofo: 'ㄇㄧㄣˊ', pinyin: 'mín', words: ['人民', '民族'], sentence: '國民要遵守國家法律。' },
+  { char: '國', level: 2, radical: '囗', bopomofo: 'ㄍㄨㄛˊ', pinyin: 'guó', words: ['中國', '國家'], sentence: '這個國家既美麗又有趣。' },
+  { char: '王', level: 2, radical: '玉', bopomofo: 'ㄨㄤˊ、ㄨㄤˋ、ㄩˋ', pinyin: 'wáng、wàng、yù', words: ['闖王', '王朝'], sentence: '故事裡有一位國王。' },
+  { char: '皇', level: 2, radical: '白', bopomofo: 'ㄏㄨㄤˊ', pinyin: 'huáng', words: ['皇帝', '皇上'], sentence: '古代的皇帝住在皇宮裡。' },
+  { char: '官', level: 2, radical: '宀', bopomofo: 'ㄍㄨㄢ', pinyin: 'guān', words: ['官員', '官兵'], sentence: '警察局裡有很多警官。' },
+  { char: '師', level: 2, radical: '巾', bopomofo: 'ㄕ', pinyin: 'shī', words: ['師父', '教師'], sentence: '老師教我們認識生字。' },
+  { char: '醫', level: 2, radical: '酉', bopomofo: 'ㄧ', pinyin: 'yī', words: ['醫院', '醫生'], sentence: '這不是普通的診所，而是專業的醫院。' },
+  { char: '企', level: 2, radical: '人', bopomofo: 'ㄑㄧˋ', pinyin: 'qì', words: ['企業', '企圖'], sentence: '爸爸在一間大企業上班。' },
+  { char: '司', level: 2, radical: '口', bopomofo: 'ㄙ', pinyin: 'sī', words: ['公司', '司法'], sentence: '爸爸在公司上班。' },
+  { char: '工', level: 2, radical: '工', bopomofo: 'ㄍㄨㄥ', pinyin: 'gōng', words: ['工作', '工業'], sentence: '工人正在蓋一棟房子。' },
+  { char: '農', level: 2, radical: '辰', bopomofo: 'ㄋㄨㄥˊ', pinyin: 'nóng', words: ['農業', '農民'], sentence: '農夫在田裡種稻米。' },
+  { char: '漁', level: 2, radical: '水', bopomofo: 'ㄩˊ', pinyin: 'yú', words: ['漁業', '漁民'], sentence: '只要天氣晴朗，漁夫就會出海捕魚。' },
+  { char: '廠', level: 2, radical: '广', bopomofo: 'ㄔㄤˇ', pinyin: 'chǎng', words: ['工廠', '廠商'], sentence: '這附近有一間鞋子工廠。' },
+  { char: '店', level: 2, radical: '广', bopomofo: 'ㄉㄧㄢˋ', pinyin: 'diàn', words: ['酒店', '飯店'], sentence: '我們去書店買了新書。' },
+  { char: '場', level: 2, radical: '土', bopomofo: 'ㄔㄤˊ、ㄔㄤˇ', pinyin: 'cháng、chǎng', words: ['市場', '機場'], sentence: '學校操場上有很多學生。' },
+  { char: '園', level: 2, radical: '囗', bopomofo: 'ㄩㄢˊ', pinyin: 'yuán', words: ['公園', '校園'], sentence: '我們去公園玩溜滑梯。' },
+  { char: '埔', level: 2, radical: '土', bopomofo: 'ㄆㄨˇ、ㄅㄨˇ', pinyin: 'pǔ、bǔ', words: ['黃埔', '大埔'], sentence: '除非親自去大埔看看，才能感受那裡的寧靜。' },
+  { char: '坑', level: 2, radical: '土', bopomofo: 'ㄎㄥ', pinyin: 'kēng', words: ['坑道', '土坑'], sentence: '路上有一個小坑洞。' },
+  { char: '溝', level: 2, radical: '水', bopomofo: 'ㄍㄡ', pinyin: 'gōu', words: ['溝通', '溝渠'], sentence: '雨水流進路邊的水溝。' },
+  { char: '塔', level: 2, radical: '土', bopomofo: 'ㄊㄚˇ', pinyin: 'tǎ', words: ['炮塔', '佛塔'], sentence: '我們爬上了一座高塔。' },
+  { char: '堡', level: 2, radical: '土', bopomofo: 'ㄅㄠˇ、ㄆㄨˋ', pinyin: 'bǎo、pù', words: ['城堡', '漢堡'], sentence: '故事裡有一座古老城堡。' },
+  { char: '沙', level: 2, radical: '水', bopomofo: 'ㄕㄚ', pinyin: 'shā', words: ['長沙', '沙漠'], sentence: '不管沙灘上有多少貝殼，我們都撿不完。' },
+  { char: '石', level: 2, radical: '石', bopomofo: 'ㄕˊ、ㄉㄢˋ', pinyin: 'shí、dàn', words: ['石首', '石油'], sentence: '河邊有很多漂亮的石頭。' },
+  { char: '土', level: 2, radical: '土', bopomofo: 'ㄊㄨˇ', pinyin: 'tǔ', words: ['土地', '土壤'], sentence: '農夫在鬆軟的泥土種菜。' },
+  { char: '泥', level: 2, radical: '水', bopomofo: 'ㄋㄧˊ、ㄋㄧˋ', pinyin: 'ní、nì', words: ['水泥', '泥沙'], sentence: '雨後地上都是泥巴。' },
+  { char: '灰', level: 2, radical: '火', bopomofo: 'ㄏㄨㄟ', pinyin: 'huī', words: ['灰色', '灰塵'], sentence: '牆壁被漆成灰色。' },
+  { char: '煙', level: 2, radical: '火', bopomofo: 'ㄧㄢ', pinyin: 'yān', words: ['煙霧', '煙臺'], sentence: '如果聞到煙味，就要趕快檢查是不是發生火災。' },
+  { char: '炭', level: 2, radical: '火', bopomofo: 'ㄊㄢˋ', pinyin: 'tàn', words: ['煤炭', '炭火'], sentence: '爺爺用木炭烤肉。' },
+  { char: '煤', level: 2, radical: '火', bopomofo: 'ㄇㄟˊ', pinyin: 'méi', words: ['煤炭', '煤礦'], sentence: '以前的火車燒煤炭。' },
+  { char: '晶', level: 2, radical: '日', bopomofo: 'ㄐㄧㄥ', pinyin: 'jīng', words: ['晶體', '水晶'], sentence: '她戴著一條水晶項鍊。' },
+  { char: '金', level: 2, radical: '金', bopomofo: 'ㄐㄧㄣ', pinyin: 'jīn', words: ['資金', '金融'], sentence: '這是一枚金色的獎牌。' },
+  { char: '銀', level: 2, radical: '金', bopomofo: 'ㄧㄣˊ', pinyin: 'yín', words: ['銀行', '銀子'], sentence: '即使沒有得到金牌，得到銀牌也讓他很開心。' },
+  { char: '銅', level: 2, radical: '金', bopomofo: 'ㄊㄨㄥˊ', pinyin: 'tóng', words: ['青銅', '銅器'], sentence: '這是一個銅製的鈴鐺。' },
+  { char: '鐵', level: 2, radical: '金', bopomofo: 'ㄊㄧㄝˇ', pinyin: 'tiě', words: ['鐵路', '鋼鐵'], sentence: '鐵門發出很大的聲音。' },
+  { char: '鋁', level: 2, radical: '金', bopomofo: 'ㄌㄩˇ', pinyin: 'lǚ', words: ['鋁土', '鋁業'], sentence: '這個水壺是鋁製的。' },
+  { char: '錫', level: 2, radical: '金', bopomofo: 'ㄒㄧˊ', pinyin: 'xí', words: ['無錫', '錫金'], sentence: '這個玩具是錫製的。' },
+  { char: '鋼', level: 2, radical: '金', bopomofo: 'ㄍㄤ、ㄍㄤˋ', pinyin: 'gāng、gàng', words: ['鋼鐵', '鋼琴'], sentence: '這座橋是用鋼鐵建造的。' },
+  { char: '鑽', level: 2, radical: '金', bopomofo: 'ㄗㄨㄢ、ㄗㄨㄢˇ、ㄗㄨㄢˋ', pinyin: 'zuān、zuǎn、zuàn', words: ['鑽進', '鑽石'], sentence: '因為這顆鑽石很珍貴，所以奶奶小心收好。' },
+  { char: '塊', level: 2, radical: '土', bopomofo: 'ㄎㄨㄞˋ', pinyin: 'kuài', words: ['一塊', '板塊'], sentence: '請給我一塊蛋糕。' },
+  { char: '堆', level: 2, radical: '土', bopomofo: 'ㄉㄨㄟ', pinyin: 'duī', words: ['一堆', '堆積'], sentence: '公園裡有一堆落葉。' },
+  { char: '段', level: 2, radical: '殳', bopomofo: 'ㄉㄨㄢˋ', pinyin: 'duàn', words: ['階段', '手段'], sentence: '這段路走起來很輕鬆。' },
+  { char: '絲', level: 2, radical: '糸', bopomofo: 'ㄙ', pinyin: 'sī', words: ['絲毫', '一絲'], sentence: '蜘蛛吐出了細絲。' },
+  { char: '線', level: 2, radical: '糸', bopomofo: 'ㄒㄧㄢˋ', pinyin: 'xiàn', words: ['路線', '航線'], sentence: '我寧可多花時間穿線，也不要縫得歪七扭八。' },
+  { char: '繩', level: 2, radical: '糸', bopomofo: 'ㄕㄥˊ', pinyin: 'shéng', words: ['繩子', '繩索'], sentence: '我們一起玩跳繩比賽。' },
+  { char: '網', level: 2, radical: '糸', bopomofo: 'ㄨㄤˇ', pinyin: 'wǎng', words: ['網絡', '網站'], sentence: '蜘蛛結了一張大網。' },
+  { char: '針', level: 2, radical: '金', bopomofo: 'ㄓㄣ', pinyin: 'zhēn', words: ['方針', '針對'], sentence: '護士拿著針幫病人打針。' },
+  { char: '釘', level: 2, radical: '金', bopomofo: 'ㄉㄧㄥ、ㄉㄧㄥˋ', pinyin: 'dīng、dìng', words: ['鐵釘', '釘子'], sentence: '工人用鐵鎚敲釘子。' },
+  { char: '鏈', level: 2, radical: '金', bopomofo: 'ㄌㄧㄢˋ', pinyin: 'liàn', words: ['鏈接', '鐵鏈'], sentence: '雖然這條項鏈很簡單，但是媽媽特別喜歡。' },
+  { char: '鎖', level: 2, radical: '金', bopomofo: 'ㄙㄨㄛˇ', pinyin: 'suǒ', words: ['封鎖', '連鎖'], sentence: '請記得把門鎖好。' },
+  { char: '鑰', level: 2, radical: '金', bopomofo: 'ㄧㄠˋ、ㄩㄝˋ', pinyin: 'yào、yuè', words: ['鑰匙', '密鑰'], sentence: '我把鑰匙放進口袋。' },
+  { char: '鏡', level: 2, radical: '金', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['墨鏡', '鏡子'], sentence: '她照著鏡子梳頭髮。' },
+  { char: '瓶', level: 2, radical: '瓦', bopomofo: 'ㄆㄧㄥˊ', pinyin: 'píng', words: ['瓶頸', '一瓶'], sentence: '請把水瓶裝滿水。' },
+  { char: '罐', level: 2, radical: '缶', bopomofo: 'ㄍㄨㄢˋ', pinyin: 'guàn', words: ['罐子', '罐頭'], sentence: '這個罐子不但堅固，而且還能重複使用。' },
+  { char: '箱', level: 2, radical: '竹', bopomofo: 'ㄒㄧㄤ', pinyin: 'xiāng', words: ['箱子', '冰箱'], sentence: '行李箱裡裝滿了衣服。' },
+  { char: '桶', level: 2, radical: '木', bopomofo: 'ㄊㄨㄥˇ', pinyin: 'tǒng', words: ['水桶', '一桶'], sentence: '請把垃圾丟進垃圾桶。' },
+  { char: '袋', level: 2, radical: '衣', bopomofo: 'ㄉㄞˋ', pinyin: 'dài', words: ['腦袋', '口袋'], sentence: '媽媽提著一袋蔬菜。' },
+  { char: '傘', level: 2, radical: '人', bopomofo: 'ㄙㄢˇ', pinyin: 'sǎn', words: ['傘兵', '跳傘'], sentence: '下雨天要記得帶雨傘。' },
+  { char: '扇', level: 2, radical: '戶', bopomofo: 'ㄕㄢˋ、ㄕㄢ', pinyin: 'shàn、shān', words: ['扇子', '摺扇'], sentence: '這把扇子既輕巧又好用。' },
+  { char: '琴', level: 2, radical: '玉', bopomofo: 'ㄑㄧㄣˊ', pinyin: 'qín', words: ['鋼琴', '琴臺'], sentence: '姐姐每天練習彈鋼琴。' },
+  { char: '鼓', level: 2, radical: '鼓', bopomofo: 'ㄍㄨˇ', pinyin: 'gǔ', words: ['鼓勵', '鼓舞'], sentence: '他很會打鼓。' },
+  { char: '笛', level: 2, radical: '竹', bopomofo: 'ㄉㄧˊ', pinyin: 'dí', words: ['笛子', '笛聲'], sentence: '他學會了吹長笛。' },
+  { char: '簫', level: 2, radical: '竹', bopomofo: 'ㄒㄧㄠ', pinyin: 'xiāo', words: ['簫聲', '吹簫'], sentence: '爺爺會吹簫。' },
+  { char: '劍', level: 2, radical: '刀', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['長劍', '劍法'], sentence: '這不是真的劍，而是表演用的道具。' },
+  { char: '槍', level: 2, radical: '木', bopomofo: 'ㄑㄧㄤ、ㄔㄥ', pinyin: 'qiāng、chēng', words: ['步槍', '機槍'], sentence: '警察配帶一把手槍。' },
+  { char: '炮', level: 2, radical: '火', bopomofo: 'ㄆㄠˊ、ㄆㄠˋ、ㄅㄠ', pinyin: 'páo、pào、bāo', words: ['炮彈', '火炮'], sentence: '節慶時會放鞭炮慶祝。' },
+  { char: '彈', level: 2, radical: '弓', bopomofo: 'ㄉㄢˋ、ㄊㄢˊ', pinyin: 'dàn、tán', words: ['導彈', '炮彈'], sentence: '他練習用彈弓射擊。' },
+  { char: '弓', level: 2, radical: '弓', bopomofo: 'ㄍㄨㄥ', pinyin: 'gōng', words: ['弓箭', '彎弓'], sentence: '獵人拿著弓箭打獵。' },
+  { char: '箭', level: 2, radical: '竹', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['火箭', '弓箭'], sentence: '只要瞄準目標，箭就能射中紅心。' },
+  { char: '盾', level: 2, radical: '目', bopomofo: 'ㄉㄨㄣˋ、ㄕㄨㄣˇ', pinyin: 'dùn、shǔn', words: ['矛盾', '盾牌'], sentence: '士兵手持一面盾牌。' },
+  { char: '旗', level: 2, radical: '方', bopomofo: 'ㄑㄧˊ', pinyin: 'qí', words: ['旗幟', '國旗'], sentence: '升旗典禮升起國旗。' },
+  { char: '徽', level: 2, radical: '彳', bopomofo: 'ㄏㄨㄟ', pinyin: 'huī', words: ['安徽', '國徽'], sentence: '他別著學校校徽。' },
+  { char: '牌', level: 2, radical: '片', bopomofo: 'ㄆㄞˊ', pinyin: 'pái', words: ['品牌', '名牌'], sentence: '商店門口掛著招牌。' },
+  { char: '榜', level: 2, radical: '木', bopomofo: 'ㄅㄤˇ、ㄅㄥˋ', pinyin: 'bǎng、bèng', words: ['榜眼', '榜樣'], sentence: '除非考試進步，才能上榜獲得獎狀。' },
+  { char: '冊', level: 2, radical: '冂', bopomofo: 'ㄘㄜˋ、ㄔㄞˇ', pinyin: 'cè、chǎi', words: ['圖冊', '註冊'], sentence: '老師發給我們一本手冊。' },
+  { char: '篇', level: 2, radical: '竹', bopomofo: 'ㄆㄧㄢ', pinyin: 'piān', words: ['一篇', '詩篇'], sentence: '我寫了一篇作文。' },
+  { char: '章', level: 2, radical: '音', bopomofo: 'ㄓㄤ', pinyin: 'zhāng', words: ['文章', '章程'], sentence: '這篇文章寫得很好。' },
+  { char: '句', level: 2, radical: '口', bopomofo: 'ㄐㄩˋ、ㄍㄡ、ㄍㄡˋ', pinyin: 'jù、gōu、gòu', words: ['一句', '幾句'], sentence: '請造一個完整的句子。' },
+  { char: '詞', level: 2, radical: '言', bopomofo: 'ㄘˊ', pinyin: 'cí', words: ['詞條', '名詞'], sentence: '不管這個詞多難，老師都會耐心解釋。' },
+  { char: '語', level: 2, radical: '言', bopomofo: 'ㄩˇ、ㄩˋ', pinyin: 'yǔ、yù', words: ['語言', '英語'], sentence: '我們在學習國語課文。' },
+  { char: '話', level: 2, radical: '言', bopomofo: 'ㄏㄨㄚˋ', pinyin: 'huà', words: ['說話', '電話'], sentence: '請你認真聽我說話。' },
+  { char: '說', level: 2, radical: '言', bopomofo: 'ㄕㄨㄛ、ㄕㄨㄟˋ、ㄩㄝˋ', pinyin: 'shuō、shuì、yuè', words: ['說道', '來說'], sentence: '老師正在說一個故事。' },
+  { char: '談', level: 2, radical: '言', bopomofo: 'ㄊㄢˊ', pinyin: 'tán', words: ['談判', '談話'], sentence: '他們正在談論功課。' },
+  { char: '講', level: 2, radical: '言', bopomofo: 'ㄐㄧㄤˇ', pinyin: 'jiǎng', words: ['講話', '講究'], sentence: '如果不懂，就要舉手請老師再講一次。' },
+  { char: '告', level: 2, radical: '口', bopomofo: 'ㄍㄠˋ、ㄍㄨˋ', pinyin: 'gào、gù', words: ['報告', '告訴'], sentence: '請你告訴我發生什麼事。' },
+  { char: '訴', level: 2, radical: '言', bopomofo: 'ㄙㄨˋ', pinyin: 'sù', words: ['告訴', '投訴'], sentence: '她把心事告訴媽媽。' },
+  { char: '詢', level: 2, radical: '言', bopomofo: 'ㄒㄩㄣˊ', pinyin: 'xún', words: ['諮詢', '詢問'], sentence: '我打電話詢問活動時間。' },
+  { char: '問', level: 2, radical: '口', bopomofo: 'ㄨㄣˋ', pinyin: 'wèn', words: ['問題', '問道'], sentence: '請你舉手發問問題。' },
+  { char: '答', level: 2, radical: '竹', bopomofo: 'ㄉㄚˊ、ㄉㄚ', pinyin: 'dá、dā', words: ['回答', '答應'], sentence: '即使題目很難，他也努力想出答案。' },
+  { char: '辯', level: 2, radical: '辛', bopomofo: 'ㄅㄧㄢˋ', pinyin: 'biàn', words: ['辯論', '辯護'], sentence: '兩隊正在進行辯論比賽。' },
+  { char: '論', level: 2, radical: '言', bopomofo: 'ㄌㄨㄣˋ、ㄌㄨㄣˊ', pinyin: 'lùn、lún', words: ['理論', '討論'], sentence: '我們一起討論這個問題。' },
+  { char: '評', level: 2, radical: '言', bopomofo: 'ㄆㄧㄥˊ', pinyin: 'píng', words: ['評價', '批評'], sentence: '老師評分很公平。' },
+  { char: '讚', level: 2, radical: '言', bopomofo: 'ㄗㄢˋ', pinyin: 'zàn', words: ['稱讚', '讚揚'], sentence: '大家都稱讚他很勇敢。' },
+  { char: '誇', level: 2, radical: '言', bopomofo: 'ㄎㄨㄚ', pinyin: 'kuā', words: ['誇張', '誇大'], sentence: '因為他表現得很好，所以老師誇獎了他。' },
+  { char: '謝', level: 2, radical: '言', bopomofo: 'ㄒㄧㄝˋ', pinyin: 'xiè', words: ['感謝', '謝謝'], sentence: '我要謝謝你的幫忙。' },
+  { char: '歉', level: 2, radical: '欠', bopomofo: 'ㄑㄧㄢˋ', pinyin: 'qiàn', words: ['道歉', '抱歉'], sentence: '他向朋友道歉了。' },
+  { char: '誤', level: 2, radical: '言', bopomofo: 'ㄨˋ', pinyin: 'wù', words: ['錯誤', '失誤'], sentence: '這是一個小小的誤會。' },
+  { char: '謊', level: 2, radical: '言', bopomofo: 'ㄏㄨㄤˇ', pinyin: 'huǎng', words: ['撒謊', '說謊'], sentence: '說謊是不對的行為。' },
+  { char: '謠', level: 2, radical: '言', bopomofo: 'ㄧㄠˊ', pinyin: 'yáo', words: ['謠言', '歌謠'], sentence: '我寧可查證清楚，也不要隨便相信謠言。' },
+  { char: '謎', level: 2, radical: '言', bopomofo: 'ㄇㄧˊ、ㄇㄧˋ、ㄇㄟˋ', pinyin: 'mí、mì、mèi', words: ['謎底', '謎團'], sentence: '這個謎語真的很難猜。' },
+  { char: '跡', level: 2, radical: '足', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['痕跡', '跡象'], sentence: '雪地上留下了腳印痕跡。' },
+  { char: '記', level: 2, radical: '言', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['記者', '書記'], sentence: '我把重要的事情記下來。' },
+  { char: '錄', level: 2, radical: '金', bopomofo: 'ㄌㄨˋ', pinyin: 'lù', words: ['錄取', '記錄'], sentence: '老師正在做課堂紀錄。' },
+  { char: '簽', level: 2, radical: '竹', bopomofo: 'ㄑㄧㄢ', pinyin: 'qiān', words: ['簽訂', '簽署'], sentence: '雖然要簽的文件很多，但是爸爸還是仔細看完。' },
+  { char: '契', level: 2, radical: '大', bopomofo: 'ㄑㄧˋ、ㄑㄧㄝˋ、ㄒㄧㄝˋ', pinyin: 'qì、qiè、xiè', words: ['契丹', '契約'], sentence: '雙方簽了一份契約。' },
+  { char: '約', level: 2, radical: '糸', bopomofo: 'ㄩㄝ', pinyin: 'yuē', words: ['條約', '大約'], sentence: '我們約好星期天見面。' },
+  { char: '條', level: 2, radical: '木', bopomofo: 'ㄊㄧㄠˊ', pinyin: 'tiáo', words: ['條件', '詞條'], sentence: '請遵守班上的規定條文。' },
+  { char: '款', level: 2, radical: '欠', bopomofo: 'ㄎㄨㄢˇ', pinyin: 'kuǎn', words: ['貸款', '存款'], sentence: '這件衣服的款式很漂亮。' },
+  { char: '列', level: 2, radical: '刀', bopomofo: 'ㄌㄧㄝˋ', pinyin: 'liè', words: ['列為', '系列'], sentence: '這份清單不但列得整齊，而且分類清楚。' },
+  { char: '序', level: 2, radical: '广', bopomofo: 'ㄒㄩˋ', pinyin: 'xù', words: ['程序', '秩序'], sentence: '請按照順序上台表演。' },
+  { char: '碼', level: 2, radical: '石', bopomofo: 'ㄇㄚˇ', pinyin: 'mǎ', words: ['碼頭', '代碼'], sentence: '請輸入正確的密碼。' },
+  { char: '點', level: 2, radical: '黑', bopomofo: 'ㄉㄧㄢˇ', pinyin: 'diǎn', words: ['一點', '重點'], sentence: '請在地圖上標出這個點。' },
+  { char: '麼', level: 3, radical: '麻', bopomofo: 'ㄇㄛˊ、˙ㄇㄚ、ㄇㄚˊ、˙ㄇㄜ', pinyin: 'mó、ma、má、me', words: ['什麼', '怎麼'], sentence: '他既想不出來要做什麼，又想不出來要說什麼。' },
+  { char: '還', level: 3, radical: '辵', bopomofo: 'ㄏㄨㄢˊ、ㄒㄩㄢˊ、ㄏㄞˊ', pinyin: 'huán、xuán、hái', words: ['還有', '還是'], sentence: '他還沒有寫完功課。' },
+  { char: '用', level: 3, radical: '用', bopomofo: 'ㄩㄥˋ', pinyin: 'yòng', words: ['使用', '作用'], sentence: '請你用心完成這件作品。' },
+  { char: '但', level: 3, radical: '人', bopomofo: 'ㄉㄢˋ', pinyin: 'dàn', words: ['但是', '不但'], sentence: '雖然這次考試題目很難，但是他還是很用心準備。' },
+  { char: '沒', level: 3, radical: '水', bopomofo: 'ㄇㄛˋ、ㄇㄟˊ', pinyin: 'mò、méi', words: ['沒有', '沒法'], sentence: '桌上沒有留下任何東西。' },
+  { char: '得', level: 3, radical: '彳', bopomofo: 'ㄉㄜˊ、ㄉㄟˇ、˙ㄉㄜ、ㄉㄞˇ', pinyin: 'dé、děi、de、dǎi', words: ['得到', '獲得'], sentence: '他跑得比誰都還要快。' },
+  { char: '然', level: 3, radical: '火', bopomofo: 'ㄖㄢˊ', pinyin: 'rán', words: ['雖然', '自然'], sentence: '只要平時多練習，自然就能表現得更好。' },
+  { char: '最', level: 3, radical: '冂', bopomofo: 'ㄗㄨㄟˋ', pinyin: 'zuì', words: ['最後', '最大'], sentence: '這是我今年最快樂的一天。' },
+  { char: '方', level: 3, radical: '方', bopomofo: 'ㄈㄤ', pinyin: 'fāng', words: ['地方', '方面'], sentence: '請告訴我正確的方向。' },
+  { char: '動', level: 3, radical: '力', bopomofo: 'ㄉㄨㄥˋ', pinyin: 'dòng', words: ['活動', '運動'], sentence: '請不要隨便移動桌椅。' },
+  { char: '事', level: 3, radical: '亅', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['軍事', '事情'], sentence: '除非把事情弄清楚，才能知道該怎麼處理。' },
+  { char: '行', level: 3, radical: '行', bopomofo: 'ㄒㄧㄥˊ、ㄒㄧㄥˋ、ㄏㄤˊ、ㄏㄤˋ', pinyin: 'xíng、xìng、háng、hàng', words: ['進行', '行政'], sentence: '我們一起走路去旅行。' },
+  { char: '所', level: 3, radical: '戶', bopomofo: 'ㄙㄨㄛˇ', pinyin: 'suǒ', words: ['所以', '所有'], sentence: '圖書館是我最喜歡的場所。' },
+  { char: '於', level: 3, radical: '方', bopomofo: 'ㄩˊ、ㄨ', pinyin: 'yú、wū', words: ['由於', '對於'], sentence: '不管對於這件事有多緊張，同學們都要冷靜作答。' },
+  { char: '如', level: 3, radical: '女', bopomofo: 'ㄖㄨˊ', pinyin: 'rú', words: ['如果', '如何'], sentence: '她畫畫的技巧如同大師。' },
+  { char: '經', level: 3, radical: '糸', bopomofo: 'ㄐㄧㄥ', pinyin: 'jīng', words: ['已經', '經濟'], sentence: '這件事情已經處理好了。' },
+  { char: '分', level: 3, radical: '刀', bopomofo: 'ㄈㄣ、ㄈㄣˋ', pinyin: 'fēn、fèn', words: ['部分', '分別'], sentence: '如果把蛋糕分成四份，就每人都能吃到一塊。' },
+  { char: '力', level: 3, radical: '力', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['能力', '權力'], sentence: '他用盡全力搬起箱子。' },
+  { char: '去', level: 3, radical: '厶', bopomofo: 'ㄑㄩˋ', pinyin: 'qù', words: ['過去', '下去'], sentence: '我們一起去公園散步。' },
+  { char: '起', level: 3, radical: '走', bopomofo: 'ㄑㄧˇ', pinyin: 'qǐ', words: ['起來', '一起'], sentence: '請大家一起起立敬禮。' },
+  { char: '學', level: 3, radical: '子', bopomofo: 'ㄒㄩㄝˊ', pinyin: 'xué', words: ['學生', '學院'], sentence: '即使功課很多，他也每天堅持認真學習。' },
+  { char: '讓', level: 3, radical: '言', bopomofo: 'ㄖㄤˋ', pinyin: 'ràng', words: ['不讓', '就讓'], sentence: '請讓一下，我要通過。' },
+  { char: '只', level: 3, radical: '口', bopomofo: 'ㄓˇ、ㄓ', pinyin: 'zhǐ、zhī', words: ['只要', '只見'], sentence: '房間裡只剩下我一個人。' },
+  { char: '道', level: 3, radical: '辵', bopomofo: 'ㄉㄠˋ', pinyin: 'dào', words: ['知道', '說道'], sentence: '因為他不知道正確的道路，所以先問了路人。' },
+  { char: '樣', level: 3, radical: '木', bopomofo: 'ㄧㄤˋ、ㄒㄧㄤˋ', pinyin: 'yàng、xiàng', words: ['這樣', '一樣'], sentence: '這件事該怎樣做才好？' },
+  { char: '體', level: 3, radical: '骨', bopomofo: 'ㄊㄧˇ', pinyin: 'tǐ', words: ['政體', '具體'], sentence: '運動能讓身體更健康。' },
+  { char: '部', level: 3, radical: '邑', bopomofo: 'ㄅㄨˋ', pinyin: 'bù', words: ['部分', '部門'], sentence: '我寧可先讀完這一部分，也不要跳著看。' },
+  { char: '果', level: 3, radical: '木', bopomofo: 'ㄍㄨㄛˇ', pinyin: 'guǒ', words: ['如果', '結果'], sentence: '如果下雨我們就不出門了。' },
+  { char: '意', level: 3, radical: '心', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['意見', '注意'], sentence: '謝謝你的關心和好意。' },
+  { char: '情', level: 3, radical: '心', bopomofo: 'ㄑㄧㄥˊ', pinyin: 'qíng', words: ['情況', '事情'], sentence: '他們是感情很好的朋友。' },
+  { char: '感', level: 3, radical: '心', bopomofo: 'ㄍㄢˇ、ㄏㄢˋ', pinyin: 'gǎn、hàn', words: ['感到', '感覺'], sentence: '雖然他不太會表達感情，但是心裡非常關心朋友。' },
+  { char: '或', level: 3, radical: '戈', bopomofo: 'ㄏㄨㄛˋ', pinyin: 'huò', words: ['或者', '或是'], sentence: '你想喝果汁或是牛奶？' },
+  { char: '無', level: 3, radical: '火', bopomofo: 'ㄨˊ、ㄇㄛˊ', pinyin: 'wú、mó', words: ['無法', '無論'], sentence: '教室裡安靜得毫無聲音。' },
+  { char: '步', level: 3, radical: '止', bopomofo: 'ㄅㄨˋ', pinyin: 'bù', words: ['一步', '進步'], sentence: '這次的舞蹈不但步伐整齊，而且動作也很優美。' },
+  { char: '次', level: 3, radical: '欠', bopomofo: 'ㄘˋ、ㄗ', pinyin: 'cì、zī', words: ['一次', '這次'], sentence: '這是我第一次來這裡。' },
+  { char: '等', level: 3, radical: '竹', bopomofo: 'ㄉㄥˇ', pinyin: 'děng', words: ['等等', '平等'], sentence: '請你在門口等我一下。' },
+  { char: '理', level: 3, radical: '玉', bopomofo: 'ㄌㄧˇ', pinyin: 'lǐ', words: ['管理', '理論'], sentence: '他既能整理房間，又能幫忙處理家事。' },
+  { char: '相', level: 3, radical: '目', bopomofo: 'ㄒㄧㄤ、ㄒㄧㄤˋ', pinyin: 'xiāng、xiàng', words: ['相關', '相同'], sentence: '兩張照片長得非常相似。' },
+  { char: '市', level: 3, radical: '巾', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['市場', '城市'], sentence: '我們去菜市場買水果。' },
+  { char: '女', level: 3, radical: '女', bopomofo: 'ㄋㄩˇ、ㄋㄩˋ、ㄖㄨˇ', pinyin: 'nǚ、nǜ、rǔ', words: ['女人', '女兒'], sentence: '班上有二十位女同學。' },
+  { char: '及', level: 3, radical: '又', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['以及', '及其'], sentence: '這不是來不及做，而是他還沒開始準備。' },
+  { char: '被', level: 3, radical: '衣', bopomofo: 'ㄅㄟˋ、ㄆㄧ', pinyin: 'bèi、pī', words: ['被迫', '被捕'], sentence: '花瓶不小心被打破了。' },
+  { char: '比', level: 3, radical: '比', bopomofo: 'ㄅㄧˇ、ㄅㄧˋ、ㄆㄧˊ', pinyin: 'bǐ、bì、pí', words: ['比較', '比賽'], sentence: '這場比賽非常精彩。' },
+  { char: '關', level: 3, radical: '門', bopomofo: 'ㄍㄨㄢ', pinyin: 'guān', words: ['關係', '機關'], sentence: '只要把門關好，冷氣就不會外洩。' },
+  { char: '已', level: 3, radical: '己', bopomofo: 'ㄧˇ', pinyin: 'yǐ', words: ['已經', '早已'], sentence: '比賽已經開始十分鐘了。' },
+  { char: '政', level: 3, radical: '攴', bopomofo: 'ㄓㄥˋ', pinyin: 'zhèng', words: ['政治', '政府'], sentence: '爸爸關心國家的政策新聞。' },
+  { char: '提', level: 3, radical: '手', bopomofo: 'ㄊㄧˊ、ㄉㄧ、ㄕˊ', pinyin: 'tí、dī、shí', words: ['提出', '提高'], sentence: '除非老師先提示一下，才能想出正確答案。' },
+  { char: '總', level: 3, radical: '糸', bopomofo: 'ㄗㄨㄥˇ', pinyin: 'zǒng', words: ['總理', '總統'], sentence: '我們班總共有三十人。' },
+  { char: '接', level: 3, radical: '手', bopomofo: 'ㄐㄧㄝ', pinyin: 'jiē', words: ['直接', '接受'], sentence: '請你接住這顆球。' },
+  { char: '期', level: 3, radical: '月', bopomofo: 'ㄑㄧˊ、ㄑㄧ、ㄐㄧ', pinyin: 'qí、qī、jī', words: ['時期', '期間'], sentence: '這學期我學到很多知識。' },
+  { char: '第', level: 3, radical: '竹', bopomofo: 'ㄉㄧˋ', pinyin: 'dì', words: ['第一', '第二'], sentence: '不管排在第幾名，大家都努力盡了全力。' },
+  { char: '北', level: 3, radical: '匕', bopomofo: 'ㄅㄟˇ、ㄅㄛˋ、ㄅㄟˋ', pinyin: 'běi、bò、bèi', words: ['北京', '湖北'], sentence: '我們搭車去台北旅行。' },
+  { char: '品', level: 3, radical: '口', bopomofo: 'ㄆㄧㄣˇ', pinyin: 'pǐn', words: ['產品', '商品'], sentence: '這是一件很精美的作品。' },
+  { char: '利', level: 3, radical: '刀', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['利用', '勝利'], sentence: '如果訓練得順利，比賽就能拿到好成績。' },
+  { char: '保', level: 3, radical: '人', bopomofo: 'ㄅㄠˇ', pinyin: 'bǎo', words: ['保護', '保持'], sentence: '我們要保護環境和動物。' },
+  { char: '化', level: 3, radical: '匕', bopomofo: 'ㄏㄨㄚˋ、ㄏㄨㄚ', pinyin: 'huà、huā', words: ['文化', '變化'], sentence: '冰塊在太陽下慢慢融化。' },
+  { char: '統', level: 3, radical: '糸', bopomofo: 'ㄊㄨㄥˇ', pinyin: 'tǒng', words: ['系統', '統一'], sentence: '即使系統有點複雜，工程師也能耐心處理。' },
+  { char: '戰', level: 3, radical: '戈', bopomofo: 'ㄓㄢˋ', pinyin: 'zhàn', words: ['戰爭', '作戰'], sentence: '兩隊進行了一場友誼賽戰。' },
+  { char: '計', level: 3, radical: '言', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['計劃', '設計'], sentence: '他認真計算今天的花費。' },
+  { char: '產', level: 3, radical: '生', bopomofo: 'ㄔㄢˇ', pinyin: 'chǎn', words: ['生產', '產品'], sentence: '農夫辛苦生產許多稻米。' },
+  { char: '資', level: 3, radical: '貝', bopomofo: 'ㄗ', pinyin: 'zī', words: ['資源', '資本'], sentence: '因為他認真收集資料，所以報告寫得很完整。' },
+  { char: '通', level: 3, radical: '辵', bopomofo: 'ㄊㄨㄥ', pinyin: 'tōng', words: ['通過', '交通'], sentence: '這條路可以直通學校。' },
+  { char: '指', level: 3, radical: '手', bopomofo: 'ㄓˇ', pinyin: 'zhǐ', words: ['指出', '指揮'], sentence: '老師用手指著黑板說明。' },
+  { char: '近', level: 3, radical: '辵', bopomofo: 'ㄐㄧㄣˋ', pinyin: 'jìn', words: ['附近', '最近'], sentence: '我寧可走比較近的路，也不要繞遠路浪費時間。' },
+  { char: '量', level: 3, radical: '里', bopomofo: 'ㄌㄧㄤˊ、ㄌㄧㄤˋ', pinyin: 'liáng、liàng', words: ['大量', '力量'], sentence: '請你測量這條線的長度。' },
+  { char: '數', level: 3, radical: '攴', bopomofo: 'ㄕㄨˋ、ㄕㄨˇ、ㄕㄨㄛˋ、ㄘㄨˋ、ㄙㄨˋ', pinyin: 'shù、shǔ、shuò、cù、sù', words: ['人數', '數量'], sentence: '請算出正確的數字答案。' },
+  { char: '調', level: 3, radical: '言', bopomofo: 'ㄊㄧㄠˊ、ㄉㄧㄠˋ', pinyin: 'tiáo、diào', words: ['調整', '調查'], sentence: '雖然要調整的地方很多，但是老師都仔細說明了。' },
+  { char: '教', level: 3, radical: '攴', bopomofo: 'ㄐㄧㄠˋ、ㄐㄧㄠ', pinyin: 'jiào、jiāo', words: ['教育', '教授'], sentence: '老師耐心教我們寫生字。' },
+  { char: '造', level: 3, radical: '辵', bopomofo: 'ㄗㄠˋ、ㄘㄠˋ', pinyin: 'zào、cào', words: ['造成', '創造'], sentence: '工人正在建造一棟房子。' },
+  { char: '許', level: 3, radical: '言', bopomofo: 'ㄒㄩˇ、ㄏㄨˇ', pinyin: 'xǔ、hǔ', words: ['許多', '也許'], sentence: '媽媽允許我出去玩。' },
+  { char: '議', level: 3, radical: '言', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['會議', '建議'], sentence: '這場會議不但討論熱烈，而且結論也很清楚。' },
+  { char: '設', level: 3, radical: '言', bopomofo: 'ㄕㄜˋ', pinyin: 'shè', words: ['建設', '設計'], sentence: '學校設計了新的活動。' },
+  { char: '萬', level: 3, radical: '禸', bopomofo: 'ㄨㄢˋ', pinyin: 'wàn', words: ['萬元', '萬噸'], sentence: '這座城市有一百萬人口。' },
+  { char: '報', level: 3, radical: '土', bopomofo: 'ㄅㄠˋ', pinyin: 'bào', words: ['報告', '報道'], sentence: '他既仔細閱讀報紙，又跟大家分享新聞內容。' },
+  { char: '案', level: 3, radical: '木', bopomofo: 'ㄢˋ', pinyin: 'àn', words: ['方案', '備案'], sentence: '警察正在調查這個案件。' },
+  { char: '展', level: 3, radical: '尸', bopomofo: 'ㄓㄢˇ', pinyin: 'zhǎn', words: ['發展', '展開'], sentence: '學校舉辦了一場美術展覽。' },
+  { char: '傳', level: 3, radical: '人', bopomofo: 'ㄔㄨㄢˊ、ㄓㄨㄢˋ', pinyin: 'chuán、zhuàn', words: ['傳統', '宣傳'], sentence: '這不是隨便的消息，而是老師親自傳達的通知。' },
+  { char: '交', level: 3, radical: '亠', bopomofo: 'ㄐㄧㄠ', pinyin: 'jiāo', words: ['交通', '交流'], sentence: '請把作業準時交給老師。' },
+  { char: '務', level: 3, radical: '力', bopomofo: 'ㄨˋ', pinyin: 'wù', words: ['任務', '服務'], sentence: '服務生親切地招呼客人。' },
+  { char: '求', level: 3, radical: '水', bopomofo: 'ㄑㄧㄡˊ', pinyin: 'qiú', words: ['要求', '需求'], sentence: '他努力追求自己的夢想。' },
+  { char: '未', level: 3, radical: '木', bopomofo: 'ㄨㄟˋ', pinyin: 'wèi', words: ['未來', '尚未'], sentence: '只要事情還未結束，大家就要繼續努力。' },
+  { char: '續', level: 3, radical: '糸', bopomofo: 'ㄒㄩˋ', pinyin: 'xù', words: ['繼續', '連續'], sentence: '請你繼續完成剩下的工作。' },
+  { char: '導', level: 3, radical: '寸', bopomofo: 'ㄉㄠˇ、ㄉㄠˋ', pinyin: 'dǎo、dào', words: ['領導', '導彈'], sentence: '老師引導我們思考問題。' },
+  { char: '請', level: 3, radical: '言', bopomofo: 'ㄑㄧㄥˇ、ㄑㄧㄥ、ㄑㄧㄥˊ', pinyin: 'qǐng、qīng、qíng', words: ['邀請', '申請'], sentence: '除非收到正式邀請，才能參加這場活動。' },
+  { char: '知', level: 3, radical: '矢', bopomofo: 'ㄓ、ㄓˋ', pinyin: 'zhī、zhì', words: ['知道', '不知'], sentence: '我終於知道正確答案了。' },
+  { char: '種', level: 3, radical: '禾', bopomofo: 'ㄓㄨㄥˇ、ㄓㄨㄥˋ', pinyin: 'zhǒng、zhòng', words: ['這種', '一種'], sentence: '公園裡種了許多種花草。' },
+  { char: '些', level: 3, radical: '二', bopomofo: 'ㄒㄧㄝ、ㄙㄨㄛˋ', pinyin: 'xiē、suò', words: ['這些', '一些'], sentence: '不管有些題目多難，同學們都認真作答。' },
+  { char: '電', level: 3, radical: '雨', bopomofo: 'ㄉㄧㄢˋ', pinyin: 'diàn', words: ['電話', '電子'], sentence: '請記得關掉電燈再出門。' },
+  { char: '性', level: 3, radical: '心', bopomofo: 'ㄒㄧㄥˋ', pinyin: 'xìng', words: ['性質', '女性'], sentence: '他的個性非常活潑開朗。' },
+  { char: '像', level: 3, radical: '人', bopomofo: 'ㄒㄧㄤˋ', pinyin: 'xiàng', words: ['好像', '像是'], sentence: '這幅畫像極了真的風景。' },
+  { char: '再', level: 3, radical: '冂', bopomofo: 'ㄗㄞˋ', pinyin: 'zài', words: ['不再', '再次'], sentence: '如果還想不出答案，就先休息一下再想。' },
+  { char: '常', level: 3, radical: '巾', bopomofo: 'ㄔㄤˊ', pinyin: 'cháng', words: ['非常', '通常'], sentence: '他經常幫忙做家事。' },
+  { char: '做', level: 3, radical: '人', bopomofo: 'ㄗㄨㄛˋ', pinyin: 'zuò', words: ['叫做', '做法'], sentence: '我正在做今天的功課。' },
+  { char: '正', level: 3, radical: '止', bopomofo: 'ㄓㄥˋ、ㄓㄥ', pinyin: 'zhèng、zhēng', words: ['真正', '正是'], sentence: '即使時間還沒到正午，他也已經肚子餓了。' },
+  { char: '位', level: 3, radical: '人', bopomofo: 'ㄨㄟˋ', pinyin: 'wèi', words: ['單位', '位於'], sentence: '請大家找到自己的座位。' },
+  { char: '者', level: 3, radical: '老', bopomofo: 'ㄓㄜˇ', pinyin: 'zhě', words: ['記者', '或者'], sentence: '這篇故事的作者是誰？' },
+  { char: '特', level: 3, radical: '牛', bopomofo: 'ㄊㄜˋ', pinyin: 'tè', words: ['特別', '特點'], sentence: '因為這是特別的日子，所以大家一起慶祝。' },
+  { char: '把', level: 3, radical: '手', bopomofo: 'ㄅㄚˇ、ㄅㄚˋ、ㄅㄞˇ', pinyin: 'bǎ、bà、bǎi', words: ['一把', '把握'], sentence: '請把窗戶打開透氣。' },
+  { char: '文', level: 3, radical: '文', bopomofo: 'ㄨㄣˊ、ㄨㄣˋ', pinyin: 'wén、wèn', words: ['文化', '文學'], sentence: '我很喜歡寫作文課。' },
+  { char: '灣', level: 3, radical: '水', bopomofo: 'ㄨㄢ', pinyin: 'wān', words: ['臺灣', '海灣'], sentence: '我們住在美麗的台灣。' },
+  { char: '變', level: 3, radical: '言', bopomofo: 'ㄅㄧㄢˋ', pinyin: 'biàn', words: ['變化', '改變'], sentence: '我寧可慢慢改變習慣，也不要一次做太多改變。' },
+  { char: '跟', level: 3, radical: '足', bopomofo: 'ㄍㄣ', pinyin: 'gēn', words: ['跟隨', '跟蹤'], sentence: '我每天跟同學一起上學。' },
+  { char: '才', level: 3, radical: '手', bopomofo: 'ㄘㄞˊ', pinyin: 'cái', words: ['人才', '才能'], sentence: '他練習很久才學會游泳。' },
+  { char: '立', level: 3, radical: '立', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['建立', '成立'], sentence: '雖然他才剛學會站立，但是走得越來越穩了。' },
+  { char: '由', level: 3, radical: '田', bopomofo: 'ㄧㄡˊ', pinyin: 'yóu', words: ['由於', '自由'], sentence: '這件事由老師決定。' },
+  { char: '軍', level: 3, radical: '車', bopomofo: 'ㄐㄩㄣ', pinyin: 'jūn', words: ['軍事', '軍隊'], sentence: '公園裡站著一位軍人。' },
+  { char: '色', level: 3, radical: '色', bopomofo: 'ㄙㄜˋ、ㄕㄞˇ、ㄕㄜˋ', pinyin: 'sè、shǎi、shè', words: ['特色', '紅色'], sentence: '這幅畫的顏色非常鮮豔。' },
+  { char: '至', level: 3, radical: '至', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['甚至', '至少'], sentence: '這場比賽不但精彩，而且甚至延長了時間。' },
+  { char: '活', level: 3, radical: '水', bopomofo: 'ㄏㄨㄛˊ', pinyin: 'huó', words: ['生活', '活動'], sentence: '我們過著幸福快樂的生活。' },
+  { char: '影', level: 3, radical: '彡', bopomofo: 'ㄧㄥˇ', pinyin: 'yǐng', words: ['影響', '電影'], sentence: '我們一起去看電影。' },
+  { char: '海', level: 3, radical: '水', bopomofo: 'ㄏㄞˇ', pinyin: 'hǎi', words: ['上海', '海軍'], sentence: '他既喜歡看海，又喜歡撿貝殼。' },
+  { char: '元', level: 3, radical: '儿', bopomofo: 'ㄩㄢˊ', pinyin: 'yuán', words: ['億元', '萬元'], sentence: '這枝鉛筆要十元。' },
+  { char: '每', level: 3, radical: '毋', bopomofo: 'ㄇㄟˇ', pinyin: 'měi', words: ['每年', '每個'], sentence: '我每天都會刷牙洗臉。' },
+  { char: '式', level: 3, radical: '弋', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['方式', '形式'], sentence: '這不是舊的方式，而是老師新教的解題方式。' },
+  { char: '結', level: 3, radical: '糸', bopomofo: 'ㄐㄧㄝˊ、ㄐㄧㄝ', pinyin: 'jié、jiē', words: ['結構', '結果'], sentence: '比賽終於結束了。' },
+  { char: '原', level: 3, radical: '厂', bopomofo: 'ㄩㄢˊ、ㄩㄢˋ', pinyin: 'yuán、yuàn', words: ['原來', '原因'], sentence: '原來這是一場誤會。' },
+  { char: '題', level: 3, radical: '頁', bopomofo: 'ㄊㄧˊ', pinyin: 'tí', words: ['問題', '主題'], sentence: '這道數學題目有點難。' },
+  { char: '認', level: 3, radical: '言', bopomofo: 'ㄖㄣˋ', pinyin: 'rèn', words: ['認為', '認識'], sentence: '只要認真練習，字就會寫得越來越漂亮。' },
+  { char: '別', level: 3, radical: '刀', bopomofo: 'ㄅㄧㄝˊ', pinyin: 'bié', words: ['特別', '分別'], sentence: '請你不要害怕，別擔心。' },
+  { char: '使', level: 3, radical: '人', bopomofo: 'ㄕˇ、ㄕˋ', pinyin: 'shǐ、shì', words: ['使用', '即使'], sentence: '老師使用圖片教我們生字。' },
+  { char: '球', level: 3, radical: '玉', bopomofo: 'ㄑㄧㄡˊ', pinyin: 'qiú', words: ['全球', '地球'], sentence: '除非練好基本動作，才能打出漂亮的球。' },
+  { char: '任', level: 3, radical: '人', bopomofo: 'ㄖㄣˋ、ㄖㄣˊ', pinyin: 'rèn、rén', words: ['任務', '任何'], sentence: '他很認真完成自己的任務。' },
+  { char: '完', level: 3, radical: '宀', bopomofo: 'ㄨㄢˊ', pinyin: 'wán', words: ['完成', '完全'], sentence: '我終於寫完今天的功課。' },
+  { char: '花', level: 3, radical: '艸', bopomofo: 'ㄏㄨㄚ', pinyin: 'huā', words: ['桃花', '棉花'], sentence: '不管花園裡有多少花，園丁都細心照顧。' },
+  { char: '見', level: 3, radical: '見', bopomofo: 'ㄐㄧㄢˋ、ㄒㄧㄢˋ', pinyin: 'jiàn、xiàn', words: ['意見', '看見'], sentence: '我在公園裡看見一隻小鳥。' },
+  { char: '持', level: 3, radical: '手', bopomofo: 'ㄔˊ', pinyin: 'chí', words: ['支持', '保持'], sentence: '他堅持每天運動半小時。' },
+  { char: '安', level: 3, radical: '宀', bopomofo: 'ㄢ', pinyin: 'ān', words: ['安全', '安排'], sentence: '請你在教室裡保持安靜。' },
+  { char: '給', level: 3, radical: '糸', bopomofo: 'ㄐㄧˇ、ㄍㄟˇ', pinyin: 'jǐ、gěi', words: ['給予', '交給'], sentence: '如果他把玩具給了弟弟，就要記得說一聲。' },
+  { char: '該', level: 3, radical: '言', bopomofo: 'ㄍㄞ', pinyin: 'gāi', words: ['應該', '不該'], sentence: '我們應該遵守交通規則。' },
+  { char: '各', level: 3, radical: '口', bopomofo: 'ㄍㄜˋ', pinyin: 'gè', words: ['各種', '各級'], sentence: '每個同學都有各自的座位。' },
+  { char: '強', level: 3, radical: '弓', bopomofo: 'ㄑㄧㄤˊ、ㄑㄧㄤˇ、ㄐㄧㄤˋ', pinyin: 'qiáng、qiǎng、jiàng', words: ['加強', '強調'], sentence: '即使對手很強，選手也不放棄努力。' },
+  { char: '達', level: 3, radical: '辵', bopomofo: 'ㄉㄚˊ、ㄊㄚˋ', pinyin: 'dá、tà', words: ['達到', '發達'], sentence: '我們終於到達山頂了。' },
+  { char: '男', level: 3, radical: '田', bopomofo: 'ㄋㄢˊ', pinyin: 'nán', words: ['男人', '男子'], sentence: '班上有二十位男同學。' },
+  { char: '院', level: 3, radical: '阜', bopomofo: 'ㄩㄢˋ', pinyin: 'yuàn', words: ['學院', '醫院'], sentence: '因為弟弟生病了，所以爸爸帶他去醫院。' },
+  { char: '斯', level: 3, radical: '斤', bopomofo: 'ㄙ', pinyin: 'sī', words: ['波斯', '斯密'], sentence: '他說話的樣子很斯文。' },
+  { char: '非', level: 3, radical: '非', bopomofo: 'ㄈㄟ、ㄈㄟˇ', pinyin: 'fēi、fěi', words: ['非常', '非洲'], sentence: '今天的天氣非常炎熱。' },
+  { char: '建', level: 3, radical: '廴', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['建設', '建立'], sentence: '工人正在建造一座新橋。' },
+  { char: '望', level: 3, radical: '月', bopomofo: 'ㄨㄤˋ', pinyin: 'wàng', words: ['希望', '願望'], sentence: '我寧可努力達成希望，也不要輕易放棄夢想。' },
+  { char: '程', level: 3, radical: '禾', bopomofo: 'ㄔㄥˊ', pinyin: 'chéng', words: ['過程', '工程'], sentence: '今天的課程非常有趣。' },
+  { char: '東', level: 3, radical: '木', bopomofo: 'ㄉㄨㄥ', pinyin: 'dōng', words: ['東西', '股東'], sentence: '太陽從東邊升起。' },
+  { char: '信', level: 3, radical: '人', bopomofo: 'ㄒㄧㄣˋ、ㄕㄣ', pinyin: 'xìn、shēn', words: ['信息', '相信'], sentence: '雖然只是一封簡短的信，但是寫滿了關心。' },
+  { char: '樂', level: 3, radical: '木', bopomofo: 'ㄩㄝˋ、ㄌㄜˋ、ㄌㄠˋ、ㄧㄠˋ', pinyin: 'yuè、lè、lào、yào', words: ['音樂', '永樂'], sentence: '我們一起唱歌很快樂。' },
+  { char: '件', level: 3, radical: '人', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['條件', '事件'], sentence: '桌上放著一件新玩具。' },
+  { char: '基', level: 3, radical: '土', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['基本', '基礎'], sentence: '這棟房子不但地基穩固，而且結構也很堅固。' },
+  { char: '區', level: 3, radical: '匸', bopomofo: 'ㄑㄩ、ㄡ、ㄍㄡ', pinyin: 'qū、ōu、gōu', words: ['地區', '區域'], sentence: '我們住在同一個社區。' },
+  { char: '運', level: 3, radical: '辵', bopomofo: 'ㄩㄣˋ', pinyin: 'yùn', words: ['運動', '運輸'], sentence: '我們一起去參加運動會。' },
+  { char: '單', level: 3, radical: '口', bopomofo: 'ㄉㄢ、ㄕㄢˋ、ㄔㄢˊ', pinyin: 'dān、shàn、chán', words: ['單位', '簡單'], sentence: '請你自己完成這份考卷單。' },
+  { char: '反', level: 3, radical: '又', bopomofo: 'ㄈㄢˇ、ㄈㄢ、ㄈㄢˋ', pinyin: 'fǎn、fān、fàn', words: ['反對', '反應'], sentence: '他既反覆練習，又細心檢查每一個步驟。' },
+  { char: '風', level: 3, radical: '風', bopomofo: 'ㄈㄥ、ㄈㄥˋ', pinyin: 'fēng、fèng', words: ['風險', '風格'], sentence: '今天吹著涼爽的微風。' },
+  { char: '較', level: 3, radical: '車', bopomofo: 'ㄐㄧㄠˋ、ㄐㄧㄠˇ、ㄐㄩㄝˊ', pinyin: 'jiào、jiǎo、jué', words: ['比較', '較大'], sentence: '這兩個答案比較接近。' },
+  { char: '整', level: 3, radical: '攴', bopomofo: 'ㄓㄥˇ', pinyin: 'zhěng', words: ['整個', '調整'], sentence: '這不是隨便擺放的，而是整整齊齊排列好的。' },
+  { char: '清', level: 3, radical: '水', bopomofo: 'ㄑㄧㄥ', pinyin: 'qīng', words: ['清楚', '清代'], sentence: '湖水非常清澈乾淨。' },
+  { char: '片', level: 3, radical: '片', bopomofo: 'ㄆㄧㄢˋ、ㄆㄧㄢ', pinyin: 'piàn、piān', words: ['一片', '圖片'], sentence: '相簿裡有許多照片。' },
+  { char: '世', level: 3, radical: '一', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['世界', '世紀'], sentence: '只要用心體會，就能感受到這個世界的美好。' },
+  { char: '價', level: 3, radical: '人', bopomofo: 'ㄐㄧㄚˋ、˙ㄍㄚ', pinyin: 'jià、ga', words: ['價值', '價格'], sentence: '這件玩具的價格不貴。' },
+  { char: '視', level: 3, radical: '見', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['重視', '電視'], sentence: '弟弟喜歡看卡通電視。' },
+  { char: '觀', level: 3, radical: '見', bopomofo: 'ㄍㄨㄢ、ㄍㄨㄢˋ', pinyin: 'guān、guàn', words: ['觀點', '觀念'], sentence: '我們一起去參觀動物園。' },
+  { char: '管', level: 3, radical: '竹', bopomofo: 'ㄍㄨㄢˇ', pinyin: 'guǎn', words: ['管理', '儘管'], sentence: '除非有人負責管理，才能讓活動順利進行。' },
+  { char: '除', level: 3, radical: '阜', bopomofo: 'ㄔㄨˊ', pinyin: 'chú', words: ['除了', '廢除'], sentence: '除了下雨天，我們都會去公園。' },
+  { char: '百', level: 3, radical: '白', bopomofo: 'ㄅㄞˇ、ㄅㄛˊ', pinyin: 'bǎi、bó', words: ['百科', '百度'], sentence: '這本故事書有一百頁。' },
+  { char: '改', level: 3, radical: '攴', bopomofo: 'ㄍㄞˇ', pinyin: 'gǎi', words: ['改革', '改變'], sentence: '不管要修改多少次，他都願意重新調整。' },
+  { char: '隊', level: 3, radical: '阜', bopomofo: 'ㄉㄨㄟˋ', pinyin: 'duì', words: ['部隊', '軍隊'], sentence: '我們排隊等公車。' },
+  { char: '服', level: 3, radical: '月', bopomofo: 'ㄈㄨˊ', pinyin: 'fú', words: ['服務', '衣服'], sentence: '請穿好制服上學。' },
+  { char: '格', level: 3, radical: '木', bopomofo: 'ㄍㄜˊ', pinyin: 'gé', words: ['價格', '嚴格'], sentence: '如果價格太貴，就先比較看看其他店家。' },
+  { char: '界', level: 3, radical: '田', bopomofo: 'ㄐㄧㄝˋ', pinyin: 'jiè', words: ['世界', '邊界'], sentence: '我們生活在美麗的世界。' },
+  { char: '決', level: 3, radical: '水', bopomofo: 'ㄐㄩㄝˊ', pinyin: 'jué', words: ['決定', '解決'], sentence: '我們決定明天去爬山。' },
+  { char: '考', level: 3, radical: '老', bopomofo: 'ㄎㄠˇ', pinyin: 'kǎo', words: ['考慮', '考試'], sentence: '明天我們要考國語小考。' },
+  { char: '難', level: 3, radical: '隹', bopomofo: 'ㄋㄢˊ、ㄋㄢˋ', pinyin: 'nán、nàn', words: ['困難', '難道'], sentence: '即使題目很難，他也努力想出正確答案。' },
+  { char: '失', level: 3, radical: '大', bopomofo: 'ㄕ', pinyin: 'shī', words: ['失敗', '失去'], sentence: '他不小心遺失了鉛筆。' },
+  { char: '南', level: 3, radical: '十', bopomofo: 'ㄋㄢˊ、ㄋㄚˊ', pinyin: 'nán、ná', words: ['南京', '南北'], sentence: '我們搭車去南部旅行。' },
+  { char: '型', level: 3, radical: '土', bopomofo: 'ㄒㄧㄥˊ', pinyin: 'xíng', words: ['大型', '類型'], sentence: '因為這是新的髮型，所以大家都稱讚他。' },
+  { char: '參', level: 3, radical: '厶', bopomofo: 'ㄘㄢ、ㄕㄣ、ㄘㄣ、ㄙㄢ', pinyin: 'cān、shēn、cēn、sān', words: ['參加', '參與'], sentence: '我報名參加了畫畫比賽。' },
+  { char: '收', level: 3, radical: '攴', bopomofo: 'ㄕㄡ', pinyin: 'shōu', words: ['收入', '吸收'], sentence: '農夫正在收成稻米。' },
+  { char: '張', level: 3, radical: '弓', bopomofo: 'ㄓㄤ、ㄓㄤˋ', pinyin: 'zhāng、zhàng', words: ['主張', '一張'], sentence: '我寧可多印一張，也不要臨時發現不夠用。' },
+  { char: '華', level: 3, radical: '艸', bopomofo: 'ㄏㄨㄚˊ、ㄏㄨㄚ、ㄏㄨㄚˋ', pinyin: 'huá、huā、huà', words: ['華北', '中華'], sentence: '我們居住在中華文化圈。' },
+  { char: '英', level: 3, radical: '艸', bopomofo: 'ㄧㄥ', pinyin: 'yīng', words: ['英國', '英雄'], sentence: '我每天練習說英文。' },
+  { char: '費', level: 3, radical: '貝', bopomofo: 'ㄈㄟˋ、ㄅㄧˋ', pinyin: 'fèi、bì', words: ['消費', '費用'], sentence: '這場活動不用花費。' },
+  { char: '德', level: 3, radical: '彳', bopomofo: 'ㄉㄜˊ', pinyin: 'dé', words: ['德國', '道德'], sentence: '雖然他年紀還小，但是品德非常良好。' },
+  { char: '轉', level: 3, radical: '車', bopomofo: 'ㄓㄨㄢˇ、ㄓㄨㄢˋ', pinyin: 'zhuǎn、zhuàn', words: ['轉移', '轉化'], sentence: '請你往左轉走。' },
+  { char: '親', level: 3, radical: '見', bopomofo: 'ㄑㄧㄣ、ㄑㄧㄥˋ', pinyin: 'qīn、qìng', words: ['父親', '母親'], sentence: '我很愛我的父母親。' },
+  { char: '引', level: 3, radical: '弓', bopomofo: 'ㄧㄣˇ', pinyin: 'yǐn', words: ['引起', '吸引'], sentence: '這場表演不但精彩，而且還吸引了很多觀眾。' },
+  { char: '布', level: 3, radical: '巾', bopomofo: 'ㄅㄨˋ', pinyin: 'bù', words: ['瀑布', '布朗'], sentence: '媽媽用布縫了一個袋子。' },
+  { char: '流', level: 3, radical: '水', bopomofo: 'ㄌㄧㄡˊ', pinyin: 'liú', words: ['河流', '交流'], sentence: '河水緩緩地流過村莊。' },
+  { char: '質', level: 3, radical: '貝', bopomofo: 'ㄓˊ、ㄓˋ', pinyin: 'zhí、zhì', words: ['物質', '性質'], sentence: '他既重視品質，又注重細節。' },
+  { char: '投', level: 3, radical: '手', bopomofo: 'ㄊㄡˊ', pinyin: 'tóu', words: ['投資', '投入'], sentence: '我們一起去操場投籃球。' },
+  { char: '辦', level: 3, radical: '辛', bopomofo: 'ㄅㄢˋ', pinyin: 'bàn', words: ['辦法', '舉辦'], sentence: '學校舉辦了一場園遊會。' },
+  { char: '推', level: 3, radical: '手', bopomofo: 'ㄊㄨㄟ', pinyin: 'tuī', words: ['推進', '推動'], sentence: '請幫我推一下這扇門。' },
+  { char: '府', level: 3, radical: '广', bopomofo: 'ㄈㄨˇ', pinyin: 'fǔ', words: ['政府', '王府'], sentence: '這不是私人的建築，而是政府蓋的圖書館。' },
+  { char: '團', level: 3, radical: '囗', bopomofo: 'ㄊㄨㄢˊ', pinyin: 'tuán', words: ['集團', '團體'], sentence: '我們班是一個團結的團隊。' },
+  { char: '克', level: 3, radical: '儿', bopomofo: 'ㄎㄜˋ', pinyin: 'kè', words: ['坦克', '千克'], sentence: '他終於克服了心中的害怕。' },
+  { char: '蘇', level: 3, radical: '艸', bopomofo: 'ㄙㄨ', pinyin: 'sū', words: ['蘇聯', '江蘇'], sentence: '只要天氣涼爽，蘇打水就特別好喝。' },
+  { char: '蔡', level: 3, radical: '艸', bopomofo: 'ㄘㄞˋ、ㄙㄚˋ', pinyin: 'cài、sà', words: ['蔡鍔', '蔡倫'], sentence: '我的同學姓蔡。' },
+  { char: '柯', level: 3, radical: '木', bopomofo: 'ㄎㄜ', pinyin: 'kē', words: ['柯達', '柯西'], sentence: '我的鄰居姓柯。' },
+  { char: '哲', level: 3, radical: '口', bopomofo: 'ㄓㄜˊ', pinyin: 'zhé', words: ['哲學', '哲理'], sentence: '除非仔細思考，才能懂得這句話裡的哲理。' },
+  { char: '應', level: 4, radical: '心', bopomofo: 'ㄧㄥ、ㄧㄥˋ', pinyin: 'yīng、yìng', words: ['應該', '應用'], sentence: '他既應該練習，又應該多休息，才能保持體力。' },
+  { char: '名', level: 4, radical: '口', bopomofo: 'ㄇㄧㄥˊ', pinyin: 'míng', words: ['著名', '名稱'], sentence: '這座山不是很有名，而是風景特別安靜漂亮。' },
+  { char: '物', level: 4, radical: '牛', bopomofo: 'ㄨˋ', pinyin: 'wù', words: ['人物', '物質'], sentence: '只要好好照顧寵物，就能和牠成為好朋友。' },
+  { char: '受', level: 4, radical: '又', bopomofo: 'ㄕㄡˋ', pinyin: 'shòu', words: ['受到', '接受'], sentence: '除非他親身感受過失敗，才會懂得努力的重要。' },
+  { char: '愛', level: 4, radical: '心', bopomofo: 'ㄞˋ', pinyin: 'ài', words: ['愛國', '愛情'], sentence: '不管天氣多冷，媽媽都很愛帶我們出門玩。' },
+  { char: '西', level: 4, radical: '襾', bopomofo: 'ㄒㄧ', pinyin: 'xī', words: ['東西', '西方'], sentence: '如果太陽從西邊落下，就代表一天快結束了。' },
+  { char: '且', level: 4, radical: '一', bopomofo: 'ㄑㄧㄝˇ、ㄐㄩ', pinyin: 'qiě、jū', words: ['而且', '並且'], sentence: '他既聰明而且勤奮。' },
+  { char: '何', level: 4, radical: '人', bopomofo: 'ㄏㄜˊ', pinyin: 'hé', words: ['如何', '任何'], sentence: '即使不知道如何開始，也可以先試試看再調整。' },
+  { char: '向', level: 4, radical: '口', bopomofo: 'ㄒㄧㄤˋ', pinyin: 'xiàng', words: ['方向', '走向'], sentence: '因為他不知道方向，所以停下來看看地圖。' },
+  { char: '則', level: 4, radical: '刀', bopomofo: 'ㄗㄜˊ', pinyin: 'zé', words: ['原則', '否則'], sentence: '請遵守班上的規則。' },
+  { char: '空', level: 4, radical: '穴', bopomofo: 'ㄎㄨㄥ、ㄎㄨㄥˋ', pinyin: 'kōng、kòng', words: ['航空', '空軍'], sentence: '我寧可留一點時間放空，也不要把行程排得太滿。' },
+  { char: '始', level: 4, radical: '女', bopomofo: 'ㄕˇ、ㄕˋ', pinyin: 'shǐ、shì', words: ['開始', '始終'], sentence: '雖然一開始不太順利，但是後來慢慢進步了。' },
+  { char: '平', level: 4, radical: '干', bopomofo: 'ㄆㄧㄥˊ、ㄆㄧㄢˊ', pinyin: 'píng、pián', words: ['水平', '平均'], sentence: '這條路不但平坦，而且風景也很美麗。' },
+  { char: '連', level: 4, radical: '辵', bopomofo: 'ㄌㄧㄢˊ', pinyin: 'lián', words: ['連續', '連接'], sentence: '姊姊既連續三天練琴，又完成了所有功課。' },
+  { char: '順', level: 4, radical: '頁', bopomofo: 'ㄕㄨㄣˋ', pinyin: 'shùn', words: ['順利', '順治'], sentence: '這件事不是很順利，而是遇到了不少困難。' },
+  { char: '航', level: 4, radical: '舟', bopomofo: 'ㄏㄤˊ', pinyin: 'háng', words: ['航空', '航線'], sentence: '只要飛機準時起航，就能在下午抵達目的地。' },
+  { char: '雄', level: 4, radical: '隹', bopomofo: 'ㄒㄩㄥˊ', pinyin: 'xióng', words: ['英雄', '羣雄'], sentence: '除非他表現得像英雄一樣勇敢，才會受到大家尊敬。' },
+  { char: '李', level: 4, radical: '木', bopomofo: 'ㄌㄧˇ', pinyin: 'lǐ', words: ['李逵', '行李'], sentence: '不管天氣如何，李伯伯都會準時來賣水果。' },
+  { char: '竟', level: 4, radical: '音', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['竟然', '畢竟'], sentence: '他竟然忘記帶課本了。' },
+  { char: '粉', level: 4, radical: '米', bopomofo: 'ㄈㄣˇ', pinyin: 'fěn', words: ['米粉', '麪粉'], sentence: '如果把粉筆折斷，就要跟老師說一聲。' },
+  { char: '版', level: 4, radical: '片', bopomofo: 'ㄅㄢˇ', pinyin: 'bǎn', words: ['出版', '版本'], sentence: '即使是舊版的故事書，也一樣好看。' },
+  { char: '承', level: 4, radical: '手', bopomofo: 'ㄔㄥˊ', pinyin: 'chéng', words: ['承認', '承擔'], sentence: '因為他勇於承認錯誤，所以大家都原諒他了。' },
+  { char: '追', level: 4, radical: '辵', bopomofo: 'ㄓㄨㄟ、ㄉㄨㄟ', pinyin: 'zhuī、duī', words: ['追求', '追趕'], sentence: '我寧可慢慢走，也不要氣喘吁吁地追趕時間。' },
+  { char: '異', level: 4, radical: '田', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['異常', '差異'], sentence: '雖然兩人個性差異很大，但是感情非常好。' },
+  { char: '圍', level: 4, radical: '囗', bopomofo: 'ㄨㄟˊ', pinyin: 'wéi', words: ['範圍', '周圍'], sentence: '這座公園不但四周圍著綠樹，而且還有美麗的花園。' },
+  { char: '爆', level: 4, radical: '火', bopomofo: 'ㄅㄠˋ、ㄅㄛˊ', pinyin: 'bào、bó', words: ['爆發', '爆炸'], sentence: '如果氣球吹得太大，就很容易爆掉。' },
+  { char: '誰', level: 4, radical: '言', bopomofo: 'ㄕㄟˊ、ㄕㄨㄟˊ', pinyin: 'shéi、shuí', words: ['誰知', '誰家'], sentence: '這不是誰的錯，而是大家都要一起負責。' },
+  { char: '盤', level: 4, radical: '皿', bopomofo: 'ㄆㄢˊ', pinyin: 'pán', words: ['棋盤', '大盤'], sentence: '只要把菜擺上盤子，就可以準備開飯了。' },
+  { char: '軟', level: 4, radical: '車', bopomofo: 'ㄖㄨㄢˇ', pinyin: 'ruǎn', words: ['軟件', '微軟'], sentence: '除非把麵糰揉軟，才能做出好吃的麵包。' },
+  { char: '艦', level: 4, radical: '舟', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['艦隊', '艦艇'], sentence: '不管軍艦有多大，都要小心航行注意安全。' },
+  { char: '救', level: 4, radical: '攴', bopomofo: 'ㄐㄧㄡˋ', pinyin: 'jiù', words: ['挽救', '搶救'], sentence: '如果有人溺水，就要立刻大聲呼救。' },
+  { char: '城', level: 4, radical: '土', bopomofo: 'ㄔㄥˊ', pinyin: 'chéng', words: ['城市', '城邦'], sentence: '即使城堡看起來很高，也能一步步爬上去。' },
+  { char: '盡', level: 4, radical: '皿', bopomofo: 'ㄐㄧㄣˋ', pinyin: 'jìn', words: ['不盡', '盡力'], sentence: '他盡力完成了這項任務。' },
+  { char: '附', level: 4, radical: '阜', bopomofo: 'ㄈㄨˋ', pinyin: 'fù', words: ['附近', '附屬'], sentence: '因為書店就在學校附近，所以我常常去逛逛。' },
+  { char: '迷', level: 4, radical: '辵', bopomofo: 'ㄇㄧˊ', pinyin: 'mí', words: ['球迷', '迷信'], sentence: '弟弟寧可多看幾次地圖，也不要在路上迷路。' },
+  { char: '激', level: 4, radical: '水', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['激烈', '刺激'], sentence: '雖然這場比賽很激烈，但是大家都玩得很開心。' },
+  { char: '顧', level: 4, radical: '頁', bopomofo: 'ㄍㄨˋ', pinyin: 'gù', words: ['照顧', '不顧'], sentence: '姊姊不但要顧妹妹，而且還要幫忙做家事。' },
+  { char: '志', level: 4, radical: '心', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['同志', '志願'], sentence: '他既立志要當醫生，又每天認真讀書。' },
+  { char: '劇', level: 4, radical: '刀', bopomofo: 'ㄐㄩˋ、ㄐㄧˊ', pinyin: 'jù、jí', words: ['戲劇', '劇烈'], sentence: '這不是一場普通的表演，而是一齣精彩的戲劇。' },
+  { char: '休', level: 4, radical: '人', bopomofo: 'ㄒㄧㄡ、ㄒㄩˇ、ㄒㄧㄡˇ', pinyin: 'xiū、xǔ、xiǔ', words: ['休息', '休閒'], sentence: '只要工作累了，就應該好好休息一下。' },
+  { char: '幣', level: 4, radical: '巾', bopomofo: 'ㄅㄧˋ', pinyin: 'bì', words: ['貨幣', '錢幣'], sentence: '他收集了各國的錢幣。' },
+  { char: '靜', level: 4, radical: '青', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['平靜', '動靜'], sentence: '除非教室完全安靜，才能開始考試。' },
+  { char: '啦', level: 4, radical: '口', bopomofo: 'ㄌㄚ、˙ㄌㄚ', pinyin: 'lā、la', words: ['嘩啦', '哇啦'], sentence: '今天終於放假了，太好啦！' },
+  { char: '構', level: 4, radical: '木', bopomofo: 'ㄍㄡˋ', pinyin: 'gòu', words: ['機構', '結構'], sentence: '不管房子的結構多複雜，工人都能仔細蓋好。' },
+  { char: '遇', level: 4, radical: '辵', bopomofo: 'ㄩˋ', pinyin: 'yù', words: ['遇到', '遭遇'], sentence: '如果在路上遇見老師，就要記得打招呼。' },
+  { char: '購', level: 4, radical: '貝', bopomofo: 'ㄍㄡˋ', pinyin: 'gòu', words: ['購買', '收購'], sentence: '即使東西不便宜，媽媽也決定去採購。' },
+  { char: '曲', level: 4, radical: '曰', bopomofo: 'ㄑㄩ、ㄑㄩˇ', pinyin: 'qū、qǔ', words: ['曲折', '戲曲'], sentence: '因為他很喜歡這首曲子，所以每天都會哼唱。' },
+  { char: '恐', level: 4, radical: '心', bopomofo: 'ㄎㄨㄥˇ', pinyin: 'kǒng', words: ['恐怕', '恐怖'], sentence: '我寧可小心一點，也不要感到恐懼害怕。' },
+  { char: '獎', level: 4, radical: '犬', bopomofo: 'ㄐㄧㄤˇ', pinyin: 'jiǎng', words: ['獎勵', '獎金'], sentence: '雖然沒有得到獎狀，但是他還是很努力。' },
+  { char: '智', level: 4, radical: '日', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['智慧', '理智'], sentence: '這個遊戲不但考驗運氣，而且還需要智慧。' },
+  { char: '勝', level: 4, radical: '力', bopomofo: 'ㄕㄥˋ、ㄕㄥ', pinyin: 'shèng、shēng', words: ['勝利', '戰勝'], sentence: '球隊既想要獲勝，又不忘互相鼓勵加油。' },
+  { char: '敗', level: 4, radical: '攴', bopomofo: 'ㄅㄞˋ', pinyin: 'bài', words: ['失敗', '腐敗'], sentence: '這不是真正的失敗，而是讓我學到更多經驗。' },
+  { char: '喔', level: 4, radical: '口', bopomofo: 'ㄨㄛˋ、ㄨ、ㄛ', pinyin: 'wò、wū、ō', words: ['好喔', '對喔'], sentence: '今天要記得帶雨傘喔！' },
+  { char: '犯', level: 4, radical: '犬', bopomofo: 'ㄈㄢˋ', pinyin: 'fàn', words: ['犯罪', '犯人'], sentence: '只要不犯規，就能繼續留在場上比賽。' },
+  { char: '尼', level: 4, radical: '尸', bopomofo: 'ㄋㄧˊ', pinyin: 'ní', words: ['印尼', '索尼'], sentence: '他去了印尼旅行。' },
+  { char: '抗', level: 4, radical: '手', bopomofo: 'ㄎㄤˋ', pinyin: 'kàng', words: ['抗日', '抗戰'], sentence: '除非大家一起反抗困難，才能順利完成任務。' },
+  { char: '輪', level: 4, radical: '車', bopomofo: 'ㄌㄨㄣˊ', pinyin: 'lún', words: ['一輪', '輪流'], sentence: '不管腳踏車的輪子多舊，爺爺都會仔細保養。' },
+  { char: '麗', level: 4, radical: '鹿', bopomofo: 'ㄌㄧˋ、ㄌㄧˊ', pinyin: 'lì、lí', words: ['美麗', '壯麗'], sentence: '如果穿上這件美麗的衣服，就會覺得很有自信。' },
+  { char: '懷', level: 4, radical: '心', bopomofo: 'ㄏㄨㄞˊ', pinyin: 'huái', words: ['懷疑', '懷裏'], sentence: '即使長大了，他也依然懷念童年的生活。' },
+  { char: '族', level: 4, radical: '方', bopomofo: 'ㄗㄨˊ', pinyin: 'zú', words: ['民族', '貴族'], sentence: '因為我們是同一個家族，所以感情特別親密。' },
+  { char: '批', level: 4, radical: '手', bopomofo: 'ㄆㄧ', pinyin: 'pī', words: ['批准', '一批'], sentence: '老師寧可多花時間批改作業，也不要漏看任何一題。' },
+  { char: '庭', level: 4, radical: '广', bopomofo: 'ㄊㄧㄥˊ', pinyin: 'tíng', words: ['家庭', '法庭'], sentence: '雖然家庭不算富有，但是每天都過得很快樂。' },
+  { char: '介', level: 4, radical: '人', bopomofo: 'ㄐㄧㄝˋ', pinyin: 'jiè', words: ['介紹', '簡介'], sentence: '這篇文章不但介紹了動物，而且還附上了照片。' },
+  { char: '療', level: 4, radical: '疒', bopomofo: 'ㄌㄧㄠˊ', pinyin: 'liáo', words: ['治療', '醫療'], sentence: '醫生既負責治療病人，又細心叮嚀他要多休息。' },
+  { char: '急', level: 4, radical: '心', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['緊急', '急忙'], sentence: '這不是很緊急的事，而是可以慢慢處理的問題。' },
+  { char: '射', level: 4, radical: '寸', bopomofo: 'ㄕㄜˋ、ㄕˊ、ㄧˋ、ㄧㄝˋ', pinyin: 'shè、shí、yì、yè', words: ['發射', '輻射'], sentence: '只要瞄準目標，就能把箭射中紅心。' },
+  { char: '莉', level: 4, radical: '艸', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['茉莉', '莉婭'], sentence: '我的朋友名叫茉莉。' },
+  { char: '副', level: 4, radical: '刀', bopomofo: 'ㄈㄨˋ、ㄆㄧˋ', pinyin: 'fù、pì', words: ['一副', '副總'], sentence: '除非班長請假，才會由副班長代理職務。' },
+  { char: '套', level: 4, radical: '大', bopomofo: 'ㄊㄠˋ', pinyin: 'tào', words: ['一套', '配套'], sentence: '不管天氣多熱，爸爸都會帶上一套雨具。' },
+  { char: '威', level: 4, radical: '女', bopomofo: 'ㄨㄟ', pinyin: 'wēi', words: ['威脅', '示威'], sentence: '如果獅子展現出威風的樣子，就會讓其他動物害怕。' },
+  { char: '署', level: 4, radical: '网', bopomofo: 'ㄕㄨˇ、ㄕㄨˋ', pinyin: 'shǔ、shù', words: ['部署', '簽署'], sentence: '即使警署很忙碌，警察也依然耐心處理案件。' },
+  { char: '藥', level: 4, radical: '艸', bopomofo: 'ㄧㄠˋ', pinyin: 'yào', words: ['藥物', '醫藥'], sentence: '因為他生病了，所以醫生開了藥給他吃。' },
+  { char: '漸', level: 4, radical: '水', bopomofo: 'ㄐㄧㄢˋ、ㄐㄧㄢ', pinyin: 'jiàn、jiān', words: ['逐漸', '漸漸'], sentence: '我寧可讓傷口慢慢漸好，也不要急著亂用藥。' },
+  { char: '殺', level: 4, radical: '殳', bopomofo: 'ㄕㄚ、ㄕㄞˋ、ㄕㄚˋ', pinyin: 'shā、shài、shà', words: ['殺人', '殺死'], sentence: '雖然蚊子很討厭，但是也不能亂噴殺蟲劑。' },
+  { char: '貝', level: 4, radical: '貝', bopomofo: 'ㄅㄟˋ', pinyin: 'bèi', words: ['寶貝', '貝爾'], sentence: '海邊不但有貝殼，而且還有很多小魚。' },
+  { char: '您', level: 4, radical: '心', bopomofo: 'ㄋㄧㄣˊ', pinyin: 'nín', words: ['您老', '您好'], sentence: '老師既關心您的功課，又關心您的身體健康。' },
+  { char: '釋', level: 4, radical: '釆', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['解釋', '釋放'], sentence: '這不是我瞎猜的，而是老師仔細解釋過的答案。' },
+  { char: '雷', level: 4, radical: '雨', bopomofo: 'ㄌㄟˊ', pinyin: 'léi', words: ['雷達', '魚雷'], sentence: '只要聽到打雷的聲音，就要記得先關窗戶。' },
+  { char: '揮', level: 4, radical: '手', bopomofo: 'ㄏㄨㄟ', pinyin: 'huī', words: ['指揮', '發揮'], sentence: '除非老師揮手示意，才能開始今天的比賽。' },
+  { char: '移', level: 4, radical: '禾', bopomofo: 'ㄧˊ', pinyin: 'yí', words: ['轉移', '移動'], sentence: '不管搬家多麻煩，家人都會一起把東西移過去。' },
+  { char: '冰', level: 4, radical: '冫', bopomofo: 'ㄅㄧㄥ', pinyin: 'bīng', words: ['冰川', '冰雪'], sentence: '如果天氣太熱，就吃一支冰棒消暑吧。' },
+  { char: '楚', level: 4, radical: '木', bopomofo: 'ㄔㄨˇ', pinyin: 'chǔ', words: ['清楚', '楚王'], sentence: '即使問題有點複雜，老師也講得非常清楚。' },
+  { char: '浪', level: 4, radical: '水', bopomofo: 'ㄌㄤˋ、ㄌㄤˊ', pinyin: 'làng、láng', words: ['浪費', '浪漫'], sentence: '因為海邊的浪花很大，所以我們要小心遊玩。' },
+  { char: '銷', level: 4, radical: '金', bopomofo: 'ㄒㄧㄠ', pinyin: 'xiāo', words: ['銷售', '撤銷'], sentence: '這家店寧可少賺一點，也不要亂銷售不好的商品。' },
+  { char: '危', level: 4, radical: '卩', bopomofo: 'ㄨㄟˊ', pinyin: 'wéi', words: ['危機', '危險'], sentence: '雖然過馬路有點危險，但是紅綠燈能幫助我們安全通過。' },
+  { char: '港', level: 4, radical: '水', bopomofo: 'ㄍㄤˇ', pinyin: 'gǎng', words: ['香港', '港口'], sentence: '這座城市不但有美麗的港口，而且船隻也很多。' },
+  { char: '春', level: 4, radical: '日', bopomofo: 'ㄔㄨㄣ', pinyin: 'chūn', words: ['春秋', '春天'], sentence: '公園裡既有春天開的花，又有翠綠的新芽。' },
+  { char: '互', level: 4, radical: '二', bopomofo: 'ㄏㄨˋ', pinyin: 'hù', words: ['相互', '互相'], sentence: '這不是單方面的幫忙，而是同學間互相幫助。' },
+  { char: '貼', level: 4, radical: '貝', bopomofo: 'ㄊㄧㄝ', pinyin: 'tiē', words: ['津貼', '補貼'], sentence: '只要小心一點，就能把貼紙貼得整整齊齊。' },
+  { char: '均', level: 4, radical: '土', bopomofo: 'ㄐㄩㄣ、ㄩㄣˋ', pinyin: 'jūn、yùn', words: ['平均', '年均'], sentence: '除非重新分配，才能讓大家平均分到禮物。' },
+  { char: '陣', level: 4, radical: '阜', bopomofo: 'ㄓㄣˋ', pinyin: 'zhèn', words: ['一陣', '陣地'], sentence: '不管風吹得多大，一陣一陣的，我們都不怕。' },
+  { char: '廳', level: 4, radical: '广', bopomofo: 'ㄊㄧㄥ', pinyin: 'tīng', words: ['大廳', '客廳'], sentence: '如果餐廳客滿了，就要在門口稍微等候。' },
+  { char: '幸', level: 4, radical: '干', bopomofo: 'ㄒㄧㄥˋ', pinyin: 'xìng', words: ['幸福', '不幸'], sentence: '即使遇到困難，他也覺得自己很幸運。' },
+  { char: '雅', level: 4, radical: '隹', bopomofo: 'ㄧㄚˇ、ㄧㄚ', pinyin: 'yǎ、yā', words: ['雅典', '優雅'], sentence: '因為她的舉止非常優雅，所以大家都喜歡她。' },
+  { char: '按', level: 4, radical: '手', bopomofo: 'ㄢˋ', pinyin: 'àn', words: ['按照', '按時'], sentence: '我寧可按照順序排隊，也不要爭先恐後。' },
+  { char: '域', level: 4, radical: '土', bopomofo: 'ㄩˋ', pinyin: 'yù', words: ['領域', '區域'], sentence: '雖然這個區域比較安靜，但是交通還算方便。' },
+  { char: '倫', level: 4, radical: '人', bopomofo: 'ㄌㄨㄣˊ', pinyin: 'lún', words: ['倫敦', '倫理'], sentence: '這個故事不但有趣，而且也教我們重視人倫關係。' },
+  { char: '烈', level: 4, radical: '火', bopomofo: 'ㄌㄧㄝˋ', pinyin: 'liè', words: ['強烈', '激烈'], sentence: '今天既陽光強烈，又有涼爽的微風。' },
+  { char: '童', level: 4, radical: '立', bopomofo: 'ㄊㄨㄥˊ', pinyin: 'tóng', words: ['兒童', '童子'], sentence: '這不是給大人看的書，而是專門為兒童設計的。' },
+  { char: '架', level: 4, radical: '木', bopomofo: 'ㄐㄧㄚˋ', pinyin: 'jià', words: ['筆架', '一架'], sentence: '只要把書架整理好，就能輕鬆找到想看的書。' },
+  { char: '朝', level: 4, radical: '月', bopomofo: 'ㄓㄠ、ㄔㄠˊ', pinyin: 'zhāo、cháo', words: ['朝廷', '朝鮮'], sentence: '除非太陽從東方升起，才會有清晨的朝陽。' },
+  { char: '棒', level: 4, radical: '木', bopomofo: 'ㄅㄤˋ', pinyin: 'bàng', words: ['鐵棒', '木棒'], sentence: '不管球打得多遠，他都覺得自己表現得很棒。' },
+  { char: '拜', level: 4, radical: '手', bopomofo: 'ㄅㄞˋ', pinyin: 'bài', words: ['崇拜', '拜見'], sentence: '如果過年到了，就要跟長輩一起去拜訪親戚。' },
+  { char: '攝', level: 4, radical: '手', bopomofo: 'ㄕㄜˋ、ㄋㄧㄝˋ', pinyin: 'shè、niè', words: ['拍攝', '攝影'], sentence: '即使天氣有點陰，攝影師也拍出了漂亮的照片。' },
+  { char: '守', level: 4, radical: '宀', bopomofo: 'ㄕㄡˇ、ㄕㄡˋ', pinyin: 'shǒu、shòu', words: ['遵守', '防守'], sentence: '因為他很守規矩，所以老師特別放心。' },
+  { char: '毛', level: 4, radical: '毛', bopomofo: 'ㄇㄠˊ', pinyin: 'máo', words: ['毛病', '眉毛'], sentence: '小狗寧可全身濕透，也不要被剪掉毛。' },
+  { char: '怪', level: 4, radical: '心', bopomofo: 'ㄍㄨㄞˋ', pinyin: 'guài', words: ['奇怪', '古怪'], sentence: '雖然這個故事有點奇怪，但是非常好聽。' },
+  { char: '隆', level: 4, radical: '阜', bopomofo: 'ㄌㄨㄥˊ', pinyin: 'lóng', words: ['乾隆', '隆重'], sentence: '這家商店不但生意興隆，而且服務也很好。' },
+  { char: '階', level: 4, radical: '阜', bopomofo: 'ㄐㄧㄝ', pinyin: 'jiē', words: ['階段', '階級'], sentence: '我們既走上高高的階梯，又欣賞了沿路風景。' },
+  { char: '夢', level: 4, radical: '夕', bopomofo: 'ㄇㄥˋ', pinyin: 'mèng', words: ['夢想', '做夢'], sentence: '這不是真的發生，而是他昨晚做的一場夢。' },
+  { char: '益', level: 4, radical: '皿', bopomofo: 'ㄧˋ、ㄧˊ', pinyin: 'yì、yí', words: ['利益', '日益'], sentence: '只要多運動，就對身體健康有益。' },
+  { char: '尋', level: 4, radical: '寸', bopomofo: 'ㄒㄩㄣˊ、ㄒㄧㄣˊ', pinyin: 'xún、xín', words: ['尋找', '尋求'], sentence: '除非仔細尋找，才能發現藏在草叢裡的球。' },
+  { char: '愈', level: 4, radical: '心', bopomofo: 'ㄩˋ', pinyin: 'yù', words: ['愈發', '愈加'], sentence: '他愈來愈喜歡讀書了。' },
+  { char: '挑', level: 4, radical: '手', bopomofo: 'ㄊㄧㄠ、ㄊㄧㄠˇ', pinyin: 'tiāo、tiǎo', words: ['挑戰', '挑選'], sentence: '不管題目多難，他都會認真挑選正確答案。' },
+  { char: '洋', level: 4, radical: '水', bopomofo: 'ㄧㄤˊ', pinyin: 'yáng', words: ['海洋', '北洋'], sentence: '如果搭船橫渡海洋，就能到達另一個國家。' },
+  { char: '幕', level: 4, radical: '巾', bopomofo: 'ㄇㄨˋ、ㄇㄛˋ', pinyin: 'mù、mò', words: ['開幕', '屏幕'], sentence: '即使布幕還沒拉開，觀眾也已經滿心期待。' },
+  { char: '罪', level: 4, radical: '网', bopomofo: 'ㄗㄨㄟˋ', pinyin: 'zuì', words: ['犯罪', '得罪'], sentence: '因為他勇於承認自己的過錯罪責，所以大家原諒他了。' },
+  { char: '鬆', level: 4, radical: '髟', bopomofo: 'ㄙㄨㄥ', pinyin: 'sōng', words: ['輕鬆', '放鬆'], sentence: '我寧可放鬆心情慢慢寫，也不要緊張出錯。' },
+  { char: '週', level: 4, radical: '辵', bopomofo: 'ㄓㄡ', pinyin: 'zhōu', words: ['週期', '週年'], sentence: '雖然這一週很忙碌，但是我還是抽空運動。' },
+  { char: '審', level: 4, radical: '宀', bopomofo: 'ㄕㄣˇ', pinyin: 'shěn', words: ['審議', '審判'], sentence: '裁判不但認真審查每個動作，而且評分也很公平。' },
+  { char: '堅', level: 4, radical: '土', bopomofo: 'ㄐㄧㄢ', pinyin: 'jiān', words: ['堅持', '堅決'], sentence: '他既堅持練習，又堅定自己的夢想。' },
+  { char: '熟', level: 4, radical: '火', bopomofo: 'ㄕㄨˊ、ㄕㄡˊ', pinyin: 'shú、shóu', words: ['成熟', '熟悉'], sentence: '這不是還沒煮熟的飯，而是剛剛煮好的。' },
+  { char: '監', level: 4, radical: '皿', bopomofo: 'ㄐㄧㄢ、ㄐㄧㄢˋ', pinyin: 'jiān、jiàn', words: ['監督', '太監'], sentence: '只要有老師監督，同學就會更認真考試。' },
+  { char: '乾', level: 4, radical: '乙', bopomofo: 'ㄑㄧㄢˊ、ㄍㄢ', pinyin: 'qián、gān', words: ['乾隆', '乾淨'], sentence: '除非把衣服曬乾，才能收進衣櫃裡。' },
+  { char: '懂', level: 4, radical: '心', bopomofo: 'ㄉㄨㄥˇ', pinyin: 'dǒng', words: ['懂得', '懂事'], sentence: '不管題目多難，老師都會耐心講到大家聽懂。' },
+  { char: '臨', level: 4, radical: '臣', bopomofo: 'ㄌㄧㄣˊ、ㄌㄧㄣˋ', pinyin: 'lín、lìn', words: ['臨時', '面臨'], sentence: '如果考試快要來臨，就要趕快複習功課。' },
+  { char: '草', level: 4, radical: '艸', bopomofo: 'ㄘㄠˇ', pinyin: 'cǎo', words: ['草原', '草案'], sentence: '即使草地上有露水，孩子們也開心地奔跑。' },
+  { char: '畢', level: 4, radical: '田', bopomofo: 'ㄅㄧˋ', pinyin: 'bì', words: ['畢業', '畢竟'], sentence: '因為他即將畢業，所以特別珍惜同學時光。' },
+  { char: '努', level: 4, radical: '力', bopomofo: 'ㄋㄨˇ', pinyin: 'nǔ', words: ['努力', '努爾'], sentence: '我寧可辛苦努力，也不要輕易放棄夢想。' },
+  { char: '忙', level: 4, radical: '心', bopomofo: 'ㄇㄤˊ', pinyin: 'máng', words: ['急忙', '連忙'], sentence: '雖然媽媽工作很忙，但是還是抽空陪我玩。' },
+  { char: '洗', level: 4, radical: '水', bopomofo: 'ㄒㄧˇ、ㄒㄧㄢˇ', pinyin: 'xǐ、xiǎn', words: ['清洗', '洗禮'], sentence: '妹妹不但會自己洗手，而且還會幫忙洗碗。' },
+  { char: '艾', level: 4, radical: '艸', bopomofo: 'ㄞˋ、ㄧˋ', pinyin: 'ài、yì', words: ['艾倫', '艾滋'], sentence: '奶奶種了一些艾草。' },
+  { char: '聊', level: 4, radical: '耳', bopomofo: 'ㄌㄧㄠˊ', pinyin: 'liáo', words: ['聊天', '無聊'], sentence: '我們既在公園聊天，又一起分享零食。' },
+  { char: '症', level: 4, radical: '疒', bopomofo: 'ㄓㄥˋ', pinyin: 'zhèng', words: ['症狀', '癌症'], sentence: '這不是感冒的症狀，而是過敏引起的。' },
+  { char: '亂', level: 4, radical: '乙', bopomofo: 'ㄌㄨㄢˋ', pinyin: 'luàn', words: ['混亂', '叛亂'], sentence: '只要把玩具收好，房間就不會顯得凌亂。' },
+  { char: '概', level: 4, radical: '木', bopomofo: 'ㄍㄞˋ', pinyin: 'gài', words: ['概念', '大概'], sentence: '除非仔細查證，才能確認正確答案，不能只是大概猜測。' },
+  { char: '貴', level: 4, radical: '貝', bopomofo: 'ㄍㄨㄟˋ', pinyin: 'guì', words: ['貴族', '珍貴'], sentence: '不管禮物多貴重，他都心懷感謝。' },
+  { char: '藏', level: 4, radical: '艸', bopomofo: 'ㄘㄤˊ、ㄗㄤˋ', pinyin: 'cáng、zàng', words: ['西藏', '藏族'], sentence: '他把寶物藏在箱子裡。' },
+  { char: '騎', level: 4, radical: '馬', bopomofo: 'ㄑㄧˊ、ㄐㄧˋ', pinyin: 'qí、jì', words: ['騎兵', '騎馬'], sentence: '即使下著小雨，他也堅持要騎腳踏車上學。' },
+  { char: '典', level: 4, radical: '八', bopomofo: 'ㄉㄧㄢˇ', pinyin: 'diǎn', words: ['典型', '大典'], sentence: '因為這本字典很厚，所以放在書架最下層。' },
+  { char: '潮', level: 4, radical: '水', bopomofo: 'ㄔㄠˊ', pinyin: 'cháo', words: ['高潮', '潮流'], sentence: '我寧可等潮水退去，也不要冒險走進海邊。' },
+  { char: '含', level: 4, radical: '口', bopomofo: 'ㄏㄢˊ、ㄏㄢˋ', pinyin: 'hán、hàn', words: ['包含', '含量'], sentence: '雖然這杯飲料含糖不多，但是還是很好喝。' },
+  { char: '河', level: 4, radical: '水', bopomofo: 'ㄏㄜˊ', pinyin: 'hé', words: ['河流', '河南'], sentence: '這條河不但水很清澈，而且魚也很多。' },
+  { char: '液', level: 4, radical: '水', bopomofo: 'ㄧㄝˋ、ㄧˋ', pinyin: 'yè、yì', words: ['血液', '溶液'], sentence: '醫生既幫他注射藥液，又叮嚀他多喝水。' },
+  { char: '售', level: 4, radical: '口', bopomofo: 'ㄕㄡˋ', pinyin: 'shòu', words: ['銷售', '出售'], sentence: '這家商店正在特價出售商品。' },
+  { char: '納', level: 4, radical: '糸', bopomofo: 'ㄋㄚˋ', pinyin: 'nà', words: ['納入', '歸納'], sentence: '學校接納了許多新同學。' },
+  { char: '良', level: 4, radical: '艮', bopomofo: 'ㄌㄧㄤˊ', pinyin: 'liáng', words: ['良好', '優良'], sentence: '他有良好的讀書習慣。' },
+  { char: '延', level: 4, radical: '廴', bopomofo: 'ㄧㄢˊ', pinyin: 'yán', words: ['延伸', '延安'], sentence: '比賽因為下雨延後舉行。' },
+  { char: '逐', level: 4, radical: '辵', bopomofo: 'ㄓㄨˊ', pinyin: 'zhú', words: ['逐漸', '逐步'], sentence: '警察逐一檢查每輛車子。' },
+  { char: '吳', level: 4, radical: '口', bopomofo: 'ㄨˊ', pinyin: 'wú', words: ['東吳', '吳儀'], sentence: '我的同學姓吳。' },
+  { char: '核', level: 4, radical: '木', bopomofo: 'ㄏㄜˊ', pinyin: 'hé', words: ['核心', '核桃'], sentence: '蘋果裡面有堅硬的果核。' },
+  { char: '付', level: 4, radical: '人', bopomofo: 'ㄈㄨˋ', pinyin: 'fù', words: ['支付', '對付'], sentence: '請你到櫃台付錢。' },
+  { char: '訓', level: 4, radical: '言', bopomofo: 'ㄒㄩㄣˋ', pinyin: 'xùn', words: ['訓練', '培訓'], sentence: '教練認真訓練我們打球。' },
+  { char: '船', level: 4, radical: '舟', bopomofo: 'ㄔㄨㄢˊ', pinyin: 'chuán', words: ['船舶', '船長'], sentence: '我們搭船遊覽湖面風景。' },
+  { char: '棄', level: 4, radical: '木', bopomofo: 'ㄑㄧˋ', pinyin: 'qì', words: ['放棄', '棄權'], sentence: '他從不輕易放棄努力。' },
+  { char: '髮', level: 4, radical: '髟', bopomofo: 'ㄈㄚˇ', pinyin: 'fǎ', words: ['頭髮', '白髮'], sentence: '姊姊既剪短了頭髮，又染成了淡淡的顏色。' },
+  { char: '甜', level: 4, radical: '甘', bopomofo: 'ㄊㄧㄢˊ', pinyin: 'tián', words: ['甜酒', '甜蜜'], sentence: '這顆西瓜吃起來非常甜。' },
+  { char: '潛', level: 4, radical: '水', bopomofo: 'ㄑㄧㄢˊ', pinyin: 'qián', words: ['潛艇', '潛力'], sentence: '他學會了潛水的技巧。' },
+  { char: '避', level: 4, radical: '辵', bopomofo: 'ㄅㄧˋ、ㄅㄟˋ', pinyin: 'bì、bèi', words: ['避免', '避開'], sentence: '過馬路要注意躲避車輛。' },
+  { char: '鮮', level: 4, radical: '魚', bopomofo: 'ㄒㄧㄢ、ㄒㄧㄢˇ', pinyin: 'xiān、xiǎn', words: ['朝鮮', '鮮血'], sentence: '早上市場的蔬菜非常新鮮。' },
+  { char: '漲', level: 4, radical: '水', bopomofo: 'ㄓㄤˋ、ㄓㄤˇ', pinyin: 'zhàng、zhǎng', words: ['上漲', '漲幅'], sentence: '颱風過後河水漲高了。' },
+  { char: '靈', level: 4, radical: '雨', bopomofo: 'ㄌㄧㄥˊ', pinyin: 'líng', words: ['靈魂', '靈活'], sentence: '她的心靈非常善良。' },
+  { char: '仔', level: 4, radical: '人', bopomofo: 'ㄗ、ㄗㄞˇ、ㄗˇ', pinyin: 'zī、zǎi、zǐ', words: ['仔細', '牛仔'], sentence: '他做事情非常仔細認真。' },
+  { char: '鄉', level: 4, radical: '邑', bopomofo: 'ㄒㄧㄤ、ㄒㄧㄤˋ', pinyin: 'xiāng、xiàng', words: ['城鄉', '鄉村'], sentence: '爺爺住在鄉下的家鄉。' },
+  { char: '貨', level: 4, radical: '貝', bopomofo: 'ㄏㄨㄛˋ', pinyin: 'huò', words: ['貨幣', '貨物'], sentence: '超市進了新的貨物。' },
+  { char: '雨', level: 4, radical: '雨', bopomofo: 'ㄩˇ、ㄩˋ', pinyin: 'yǔ、yù', words: ['小雨', '雨水'], sentence: '今天下起了大雨。' },
+  { char: '彩', level: 4, radical: '彡', bopomofo: 'ㄘㄞˇ', pinyin: 'cǎi', words: ['色彩', '精彩'], sentence: '天空出現一道美麗的彩虹。' },
+  { char: '距', level: 4, radical: '足', bopomofo: 'ㄐㄩˋ', pinyin: 'jù', words: ['距離', '差距'], sentence: '我家距離學校不遠。' },
+  { char: '束', level: 4, radical: '木', bopomofo: 'ㄕㄨˋ', pinyin: 'shù', words: ['結束', '約束'], sentence: '放學後我們準備結束活動。' },
+  { char: '暗', level: 4, radical: '日', bopomofo: 'ㄢˋ', pinyin: 'àn', words: ['黑暗', '暗暗'], sentence: '房間裡的燈光很暗。' },
+  { char: '缺', level: 4, radical: '缶', bopomofo: 'ㄑㄩㄝ', pinyin: 'quē', words: ['缺乏', '缺少'], sentence: '這幅拼圖還缺了一塊。' },
+  { char: '略', level: 4, radical: '田', bopomofo: 'ㄌㄩㄝˋ', pinyin: 'lüè', words: ['戰略', '侵略'], sentence: '他簡略介紹了活動內容。' },
+  { char: '織', level: 4, radical: '糸', bopomofo: 'ㄓ', pinyin: 'zhī', words: ['組織', '紡織'], sentence: '奶奶正在織一條圍巾。' },
+  { char: '醒', level: 4, radical: '酉', bopomofo: 'ㄒㄧㄥˇ、ㄒㄧㄥ', pinyin: 'xǐng、xīng', words: ['提醒', '清醒'], sentence: '弟弟每天很早就醒來。' },
+  { char: '掌', level: 4, radical: '手', bopomofo: 'ㄓㄤˇ', pinyin: 'zhǎng', words: ['掌握', '手掌'], sentence: '大家一起拍手鼓掌慶祝。' },
+  { char: '圓', level: 4, radical: '囗', bopomofo: 'ㄩㄢˊ', pinyin: 'yuán', words: ['圓形', '圓滿'], sentence: '今晚是滿月，月亮又大又圓。' },
+  { char: '麻', level: 4, radical: '麻', bopomofo: 'ㄇㄚˊ', pinyin: 'má', words: ['麻煩', '麻城'], sentence: '這道菜吃起來有點麻辣。' },
+  { char: '沉', level: 4, radical: '水', bopomofo: 'ㄔㄣˊ', pinyin: 'chén', words: ['沉重', '沉默'], sentence: '石頭丟進水裡就沉下去了。' },
+  { char: '野', level: 4, radical: '里', bopomofo: 'ㄧㄝˇ', pinyin: 'yě', words: ['野生', '野蠻'], sentence: '我們去郊外野餐。' },
+  { char: '隔', level: 4, radical: '阜', bopomofo: 'ㄍㄜˊ', pinyin: 'gé', words: ['隔離', '隔壁'], sentence: '我家隔壁住著一位老爺爺。' },
+  { char: '競', level: 4, radical: '立', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['競爭', '競賽'], sentence: '學校舉辦了一場歌唱競賽。' },
+  { char: '央', level: 4, radical: '大', bopomofo: 'ㄧㄤ', pinyin: 'yāng', words: ['中央', '央視'], sentence: '廣場中央有一座噴水池。' },
+  { char: '葉', level: 4, radical: '艸', bopomofo: 'ㄧㄝˋ、ㄕㄜˋ', pinyin: 'yè、shè', words: ['茶葉', '中葉'], sentence: '秋天的樹葉變成金黃色。' },
+  { char: '幅', level: 4, radical: '巾', bopomofo: 'ㄈㄨˊ、ㄅㄧ', pinyin: 'fú、bī', words: ['大幅', '一幅'], sentence: '牆上掛著一幅美麗的畫。' },
+  { char: '秀', level: 4, radical: '禾', bopomofo: 'ㄒㄧㄡˋ', pinyin: 'xiù', words: ['優秀', '秀麗'], sentence: '她的表演非常優秀出色。' },
+  { char: '宜', level: 4, radical: '宀', bopomofo: 'ㄧˊ', pinyin: 'yí', words: ['宜昌', '適宜'], sentence: '這件衣服的價格很便宜。' },
+  { char: '楊', level: 4, radical: '木', bopomofo: 'ㄧㄤˊ', pinyin: 'yáng', words: ['意楊', '楊柳'], sentence: '我的老師姓楊。' },
+  { char: '瑞', level: 4, radical: '玉', bopomofo: 'ㄖㄨㄟˋ', pinyin: 'ruì', words: ['瑞士', '瑞典'], sentence: '今年冬天下了一場瑞雪。' },
+  { char: '扁', level: 4, radical: '戶', bopomofo: 'ㄅㄧㄢˇ、ㄆㄧㄢ', pinyin: 'biǎn、piān', words: ['扁平', '扁擔'], sentence: '這個盒子被壓得又扁又平。' },
+  { char: '脫', level: 4, radical: '肉', bopomofo: 'ㄊㄨㄛ、ㄊㄨㄟˋ', pinyin: 'tuō、tuì', words: ['擺脫', '脫離'], sentence: '回家後記得脫下鞋子。' },
+  { char: '檔', level: 4, radical: '木', bopomofo: 'ㄉㄤˇ、ㄉㄤˋ', pinyin: 'dǎng、dàng', words: ['檔案', '高檔'], sentence: '老師把資料存進電腦檔案。' },
+  { char: '刺', level: 4, radical: '刀', bopomofo: 'ㄘˋ', pinyin: 'cì', words: ['刺激', '刺史'], sentence: '玫瑰花的莖上長滿了刺。' },
+  { char: '染', level: 4, radical: '木', bopomofo: 'ㄖㄢˇ', pinyin: 'rǎn', words: ['污染', '感染'], sentence: '畫畫時要小心不要弄髒染色。' },
+  { char: '蓋', level: 4, radical: '艸', bopomofo: 'ㄍㄞˋ、ㄍㄜˇ、ㄏㄜˊ', pinyin: 'gài、gě、hé', words: ['覆蓋', '涵蓋'], sentence: '請幫我蓋上瓶子的蓋子。' },
+  { char: '普', level: 4, radical: '日', bopomofo: 'ㄆㄨˇ', pinyin: 'pǔ', words: ['普通', '普遍'], sentence: '這個活動非常普遍受歡迎。' },
+  { char: '劃', level: 4, radical: '刀', bopomofo: 'ㄏㄨㄚˋ、ㄏㄨㄚˊ', pinyin: 'huà、huá', words: ['計劃', '規劃'], sentence: '我們一起規劃暑假計畫。' },
+  { char: '縮', level: 4, radical: '糸', bopomofo: 'ㄙㄨㄛ、ㄙㄨˋ', pinyin: 'suō、sù', words: ['縮小', '縮短'], sentence: '毛衣洗過後縮小了一號。' },
+  { char: '擺', level: 4, radical: '手', bopomofo: 'ㄅㄞˇ', pinyin: 'bǎi', words: ['擺脫', '擺在'], sentence: '請把桌椅擺放整齊。' },
+  { char: '翻', level: 4, radical: '羽', bopomofo: 'ㄈㄢ', pinyin: 'fān', words: ['翻譯', '推翻'], sentence: '請把課本翻到第十頁。' },
+  { char: '藉', level: 4, radical: '艸', bopomofo: 'ㄐㄧㄝˋ、ㄐㄧˊ', pinyin: 'jiè、jí', words: ['憑藉', '藉口'], sentence: '他藉著這個機會發表意見。' },
+  { char: '稅', level: 4, radical: '禾', bopomofo: 'ㄕㄨㄟˋ', pinyin: 'shuì', words: ['稅收', '利稅'], sentence: '爸爸每年都要繳稅。' },
+  { char: '盟', level: 4, radical: '皿', bopomofo: 'ㄇㄥˊ、ㄇㄥˋ', pinyin: 'méng、mèng', words: ['聯盟', '歐盟'], sentence: '兩個國家簽訂了友好聯盟。' },
+  { char: '額', level: 4, radical: '頁', bopomofo: 'ㄜˊ、ㄜˋ', pinyin: 'é、è', words: ['總額', '匾額'], sentence: '他的額頭上流著汗水。' },
+  { char: '融', level: 4, radical: '虫', bopomofo: 'ㄖㄨㄥˊ', pinyin: 'róng', words: ['金融', '融合'], sentence: '冰淇淋在太陽下慢慢融化。' },
+  { char: '暴', level: 4, radical: '日', bopomofo: 'ㄅㄠˋ、ㄆㄨˋ', pinyin: 'bào、pù', words: ['暴露', '風暴'], sentence: '昨晚下了一場暴風雨。' },
+  { char: '館', level: 4, radical: '食', bopomofo: 'ㄍㄨㄢˇ', pinyin: 'guǎn', words: ['使館', '賓館'], sentence: '我們去圖書館借書。' },
+  { char: '京', level: 1, radical: '亠', bopomofo: 'ㄐㄧㄥ、ㄩㄢˊ', pinyin: 'jīng、yuán', words: ['北京', '南京'], sentence: '我們搭飛機去北京旅行。' },
+  { char: '作', level: 1, radical: '人', bopomofo: 'ㄗㄨㄛˋ、ㄗㄨㄛ、ㄗㄨㄛˊ', pinyin: 'zuò、zuō、zuó', words: ['工作', '作為'], sentence: '爸爸每天認真工作。' },
+  { char: '讀', level: 4, radical: '言', bopomofo: 'ㄉㄨˊ、ㄉㄡˋ', pinyin: 'dú、dòu', words: ['閱讀', '讀者'], sentence: '我每天都會讀一本故事書。' },
+  { char: '試', level: 3, radical: '言', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['考試', '試驗'], sentence: '明天要進行國語小考試。' },
+  { char: '離', level: 4, radical: '隹', bopomofo: 'ㄌㄧˊ', pinyin: 'lí', words: ['離開', '距離'], sentence: '學校離我家不太遠。' },
+  { char: '紹', level: 2, radical: '糸', bopomofo: 'ㄕㄠˋ', pinyin: 'shào', words: ['介紹', '紹興'], sentence: '老師向大家介紹新同學。' },
+  { char: '旅', level: 2, radical: '方', bopomofo: 'ㄌㄩˇ', pinyin: 'lǚ', words: ['旅遊', '旅客'], sentence: '這趟旅行既輕鬆又愉快。' },
+  { char: '備', level: 3, radical: '人', bopomofo: 'ㄅㄟˋ', pinyin: 'bèi', words: ['準備', '設備'], sentence: '請準備好上課要用的課本。' },
+  { char: '千', level: 1, radical: '十', bopomofo: 'ㄑㄧㄢ', pinyin: 'qiān', words: ['千米', '千萬'], sentence: '這本書大約有一千頁。' },
+  { char: '便', level: 2, radical: '人', bopomofo: 'ㄅㄧㄢˋ、ㄆㄧㄢˊ', pinyin: 'biàn、pián', words: ['便是', '方便'], sentence: '這個地方交通很方便。' },
+  { char: '希', level: 1, radical: '巾', bopomofo: 'ㄒㄧ', pinyin: 'xī', words: ['希望', '希臘'], sentence: '我希望明天出太陽。' },
+  { char: '準', level: 3, radical: '水', bopomofo: 'ㄓㄨㄣˇ', pinyin: 'zhǔn', words: ['準備', '標準'], sentence: '請大家準時到達學校。' },
+  { char: '越', level: 3, radical: '走', bopomofo: 'ㄩㄝˋ', pinyin: 'yuè', words: ['越是', '越南'], sentence: '不管天氣多冷，他都跑得越來越快。' },
+  { char: '解', level: 3, radical: '角', bopomofo: 'ㄐㄧㄝˇ、ㄐㄧㄝˋ、ㄒㄧㄝˋ', pinyin: 'jiě、jiè、xiè', words: ['解決', '瞭解'], sentence: '老師幫我們解釋這個問題。' },
+  { char: '表', level: 1, radical: '衣', bopomofo: 'ㄅㄧㄠˇ', pinyin: 'biǎo', words: ['代表', '表示'], sentence: '哥哥戴著一支手表。' },
+  { char: '擔', level: 4, radical: '手', bopomofo: 'ㄉㄢ、ㄉㄢˋ', pinyin: 'dān、dàn', words: ['擔任', '擔心'], sentence: '媽媽每天都很擔心我。' },
+  { char: '故', level: 2, radical: '攴', bopomofo: 'ㄍㄨˋ', pinyin: 'gù', words: ['故事', '故道'], sentence: '奶奶說了一個有趣的故事。' },
+  { char: '雖', level: 4, radical: '隹', bopomofo: 'ㄙㄨㄟ、ㄙㄨㄟˊ', pinyin: 'suī、suí', words: ['雖然', '雖說'], sentence: '雖然下雨，我們還是去了公園。' },
+  { char: '發', level: 3, radical: '癶', bopomofo: 'ㄈㄚ', pinyin: 'fā', words: ['發展', '發現'], sentence: '老師發下今天的考卷。' },
+  { char: '啊', level: 2, radical: '口', bopomofo: 'ㄚ、ㄛ、˙ㄚ', pinyin: 'ā、ō、a', words: ['啊喲', '啊哈'], sentence: '今天的天氣真好啊！' },
+  { char: '定', level: 1, radical: '宀', bopomofo: 'ㄉㄧㄥˋ', pinyin: 'dìng', words: ['決定', '一定'], sentence: '我決定明天早點起床。' },
+  { char: '直', level: 1, radical: '目', bopomofo: 'ㄓˊ', pinyin: 'zhí', words: ['一直', '直接'], sentence: '請你把繩子拉直。' },
+  { char: '極', level: 3, radical: '木', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['積極', '極大'], sentence: '如果他積極參加活動，就能認識更多朋友。' },
+  { char: '趣', level: 4, radical: '走', bopomofo: 'ㄑㄩˋ、ㄘㄨˋ', pinyin: 'qù、cù', words: ['興趣', '有趣'], sentence: '這個故事非常有趣。' },
+  { char: '實', level: 3, radical: '宀', bopomofo: 'ㄕˊ', pinyin: 'shí', words: ['實行', '實現'], sentence: '他說的話都是事實。' },
+  { char: '其', level: 1, radical: '八', bopomofo: 'ㄑㄧˊ、ㄐㄧ、ㄐㄧˋ', pinyin: 'qí、jī、jì', words: ['其中', '其他'], sentence: '他們其中一個是我表哥。' },
+  { char: '照', level: 3, radical: '火', bopomofo: 'ㄓㄠˋ', pinyin: 'zhào', words: ['按照', '依照'], sentence: '請幫我拍一張照片。' },
+  { char: '主', level: 1, radical: '丶', bopomofo: 'ㄓㄨˇ', pinyin: 'zhǔ', words: ['主要', '主席'], sentence: '老師是今天活動的主人。' },
+  { char: '而', level: 1, radical: '而', bopomofo: 'ㄦˊ', pinyin: 'ér', words: ['而且', '而是'], sentence: '他認真而且細心。' },
+  { char: '歷', level: 4, radical: '止', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['歷史', '經歷'], sentence: '老師教我們認識歷史故事。' },
+  { char: '滿', level: 3, radical: '水', bopomofo: 'ㄇㄢˇ', pinyin: 'mǎn', words: ['滿足', '充滿'], sentence: '即使杯子已經裝滿了，他也小心不讓水灑出來。' },
+  { char: '突', level: 2, radical: '穴', bopomofo: 'ㄊㄨˊ', pinyin: 'tú', words: ['突然', '突出'], sentence: '他突然大叫一聲。' },
+  { char: '終', level: 2, radical: '糸', bopomofo: 'ㄓㄨㄥ', pinyin: 'zhōng', words: ['終於', '最終'], sentence: '這不是結束，而是新的旅程終於開始。' },
+  { char: '害', level: 2, radical: '宀', bopomofo: 'ㄏㄞˋ、ㄏㄜˊ', pinyin: 'hài、hé', words: ['厲害', '害怕'], sentence: '蟑螂是常見的害蟲。' },
+  { char: '法', level: 1, radical: '水', bopomofo: 'ㄈㄚˇ、ㄈㄚˊ、ㄈㄚ', pinyin: 'fǎ、fá、fā', words: ['法律', '方法'], sentence: '請你想個好辦法。' },
+  { char: '史', level: 1, radical: '口', bopomofo: 'ㄕˇ', pinyin: 'shǐ', words: ['歷史', '史料'], sentence: '我喜歡讀歷史故事。' },
+  { char: '查', level: 2, radical: '木', bopomofo: 'ㄔㄚˊ、ㄓㄚ', pinyin: 'chá、zhā', words: ['調查', '檢查'], sentence: '老師檢查我們的作業。' },
+  { char: '帶', level: 2, radical: '巾', bopomofo: 'ㄉㄞˋ', pinyin: 'dài', words: ['帶來', '一帶'], sentence: '請記得帶你的水壺。' },
+  { char: '算', level: 3, radical: '竹', bopomofo: 'ㄙㄨㄢˋ', pinyin: 'suàn', words: ['計算', '預算'], sentence: '他很會計算數學題目。' },
+  { char: '另', level: 1, radical: '口', bopomofo: 'ㄌㄧㄥˋ', pinyin: 'lìng', words: ['另外', '另行'], sentence: '請你再想另一個答案。' },
+  { char: '景', level: 3, radical: '日', bopomofo: 'ㄐㄧㄥˇ、ㄧㄥˇ', pinyin: 'jǐng、yǐng', words: ['背景', '風景'], sentence: '山上的風景非常漂亮。' },
+  { char: '紀', level: 2, radical: '糸', bopomofo: 'ㄐㄧˋ、ㄐㄧˇ', pinyin: 'jì、jǐ', words: ['世紀', '年紀'], sentence: '請問你今年幾歲年紀？' },
+  { char: '嘗', level: 3, radical: '口', bopomofo: 'ㄔㄤˊ', pinyin: 'cháng', words: ['嘗試', '未嘗'], sentence: '我想嘗試新的食物。' },
+  { char: '汗', level: 1, radical: '水', bopomofo: 'ㄏㄢˋ、ㄏㄢˊ', pinyin: 'hàn、hán', words: ['冷汗', '汗水'], sentence: '跑步後他流了很多汗。' },
+  { char: '厲', level: 4, radical: '厂', bopomofo: 'ㄌㄧˋ、ㄌㄞˋ', pinyin: 'lì、lài', words: ['厲害', '嚴厲'], sentence: '他真是太厲害了。' },
+  { char: '辣', level: 3, radical: '辛', bopomofo: 'ㄌㄚˋ', pinyin: 'là', words: ['辣味', '辣椒'], sentence: '因為這道菜太辣了，所以他喝了很多水。' },
+  { char: '全', level: 1, radical: '入', bopomofo: 'ㄑㄩㄢˊ', pinyin: 'quán', words: ['全國', '完全'], sentence: '全班同學都到齊了。' },
+  { char: '代', level: 1, radical: '人', bopomofo: 'ㄉㄞˋ', pinyin: 'dài', words: ['代表', '年代'], sentence: '爺爺常常說古代的故事。' },
+  { char: '僅', level: 3, radical: '人', bopomofo: 'ㄐㄧㄣˇ、ㄐㄧㄣˋ', pinyin: 'jǐn、jìn', words: ['不僅', '僅僅'], sentence: '這裡僅剩下最後一個位子。' },
+  { char: '雜', level: 4, radical: '隹', bopomofo: 'ㄗㄚˊ', pinyin: 'zá', words: ['複雜', '雜誌'], sentence: '房間裡的東西擺得很雜亂。' },
+  { char: '組', level: 2, radical: '糸', bopomofo: 'ㄗㄨˇ', pinyin: 'zǔ', words: ['組織', '組成'], sentence: '只要分好組別，比賽就可以開始。' },
+  { char: '掉', level: 2, radical: '手', bopomofo: 'ㄉㄧㄠˋ', pinyin: 'diào', words: ['殺掉', '丟掉'], sentence: '他不小心把杯子摔掉了。' },
+  { char: '奮', level: 4, radical: '大', bopomofo: 'ㄈㄣˋ', pinyin: 'fèn', words: ['興奮', '奮鬥'], sentence: '大家都很興奮地參加運動會。' },
+  { char: '繼', level: 4, radical: '糸', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['繼續', '繼承'], sentence: '我們繼續完成這項工作。' },
+  { char: '料', level: 2, radical: '斗', bopomofo: 'ㄌㄧㄠˋ', pinyin: 'liào', words: ['材料', '資料'], sentence: '媽媽準備了做菜的材料。' },
+  { char: '排', level: 2, radical: '手', bopomofo: 'ㄆㄞˊ、ㄆㄞˇ', pinyin: 'pái、pǎi', words: ['安排', '排列'], sentence: '請大家排隊上車。' },
+  { char: '首', level: 2, radical: '首', bopomofo: 'ㄕㄡˇ', pinyin: 'shǒu', words: ['石首', '首先'], sentence: '我最喜歡這首歌曲。' },
+  { char: '聯', level: 4, radical: '耳', bopomofo: 'ㄌㄧㄢˊ', pinyin: 'lián', words: ['聯繫', '聯合'], sentence: '我們保持聯絡。' },
+  { char: '禁', level: 3, radical: '示', bopomofo: 'ㄐㄧㄣˋ、ㄐㄧㄣ', pinyin: 'jìn、jīn', words: ['不禁', '禁止'], sentence: '圖書館裡禁止大聲說話。' },
+  { char: '誌', level: 3, radical: '言', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['標誌', '雜誌'], sentence: '我寧可看雜誌上的圖片，也不要一直看文字。' },
+  { char: '緊', level: 3, radical: '糸', bopomofo: 'ㄐㄧㄣˇ', pinyin: 'jǐn', words: ['緊張', '趕緊'], sentence: '請大家緊緊牽著手。' },
+  { char: '死', level: 1, radical: '歹', bopomofo: 'ㄙˇ', pinyin: 'sǐ', words: ['死亡', '打死'], sentence: '那朵花已經枯死了。' },
+  { char: '食', level: 2, radical: '食', bopomofo: 'ㄕˊ、ㄙˋ、ㄧˋ', pinyin: 'shí、sì、yì', words: ['食品', '糧食'], sentence: '除非準備好食物，才能開始野餐。' },
+  { char: '散', level: 3, radical: '攴', bopomofo: 'ㄙㄢˋ、ㄙㄢˇ', pinyin: 'sàn、sǎn', words: ['分散', '擴散'], sentence: '我們吃完飯後去散步。' },
+  { char: '份', level: 1, radical: '人', bopomofo: 'ㄈㄣˋ、ㄅㄧㄣ', pinyin: 'fèn、bīn', words: ['股份', '一份'], sentence: '請你分我一份點心。' },
+  { char: '背', level: 2, radical: '肉', bopomofo: 'ㄅㄟˋ、ㄅㄟ', pinyin: 'bèi、bēi', words: ['背景', '背上'], sentence: '他背著書包去上學。' },
+  { char: '趕', level: 3, radical: '走', bopomofo: 'ㄍㄢˇ', pinyin: 'gǎn', words: ['趕快', '趕緊'], sentence: '我們趕快去搭公車吧。' },
+  { char: '操', level: 4, radical: '手', bopomofo: 'ㄘㄠ、ㄘㄠˋ', pinyin: 'cāo、cào', words: ['操作', '曹操'], sentence: '我們在操場上運動。' },
+  { char: '詩', level: 3, radical: '言', bopomofo: 'ㄕ', pinyin: 'shī', words: ['詩人', '詩歌'], sentence: '雖然這首詩不長，但是意境非常優美。' },
+  { char: '朗', level: 2, radical: '月', bopomofo: 'ㄌㄤˇ', pinyin: 'lǎng', words: ['伊朗', '布朗'], sentence: '今天天氣晴朗舒適。' },
+  { char: '夜', level: 1, radical: '夕', bopomofo: 'ㄧㄝˋ', pinyin: 'yè', words: ['一夜', '夜晚'], sentence: '夜晚的星星好美麗。' },
+  { char: '古', level: 1, radical: '口', bopomofo: 'ㄍㄨˇ', pinyin: 'gǔ', words: ['古代', '蒙古'], sentence: '博物館展出許多古代文物。' },
+  { char: '台', level: 1, radical: '口', bopomofo: 'ㄊㄞ、ㄧˊ', pinyin: 'tāi、yí', words: ['台州', '天台'], sentence: '我們坐在舞台前面看表演。' },
+  { char: '舍', level: 1, radical: '舌', bopomofo: 'ㄕㄜˋ、ㄕㄜˇ', pinyin: 'shè、shě', words: ['宿舍', '舍人'], sentence: '我們住在學校宿舍裡。' },
+  { char: '餐', level: 4, radical: '食', bopomofo: 'ㄘㄢ', pinyin: 'cān', words: ['套餐', '餐廳'], sentence: '我們一起吃了一頓豐盛的晚餐。' },
+  { char: '卷', level: 1, radical: '卩', bopomofo: 'ㄐㄩㄢˋ、ㄐㄩㄢˇ、ㄑㄩㄢˊ', pinyin: 'juàn、juǎn、quán', words: ['試卷', '考卷'], sentence: '考試時間到了要交卷。' },
+  { char: '宮', level: 2, radical: '宀', bopomofo: 'ㄍㄨㄥ', pinyin: 'gōng', words: ['宮廷', '宮女'], sentence: '故事裡的公主住在皇宮。' },
+  { char: '和', level: 1, radical: '口', bopomofo: 'ㄏㄜˊ、˙ㄏㄨㄛ、ㄏㄜˋ、ㄏㄨㄛˋ、ㄏㄢˋ、ㄏㄨˊ', pinyin: 'hé、huo、hè、huò、hàn、hú', words: ['和平', '和尚'], sentence: '我和弟弟一起玩球。' },
+  { char: '喫', level: 3, radical: '口', bopomofo: 'ㄔ', pinyin: 'chī', words: ['喫飯', '好喫'], sentence: '他喜歡喫甜甜的糕點。' },
+  { char: '漂', level: 3, radical: '水', bopomofo: 'ㄆㄧㄠ、ㄆㄧㄠˇ、ㄆㄧㄠˋ', pinyin: 'piāo、piǎo、piào', words: ['漂亮', '漂浮'], sentence: '她今天打扮得很漂亮。' },
+  { char: '買', level: 3, radical: '貝', bopomofo: 'ㄇㄞˇ', pinyin: 'mǎi', words: ['購買', '買賣'], sentence: '這不是隨便買的，而是他存錢很久才買的。' },
+  { char: '呢', level: 1, radical: '口', bopomofo: 'ㄋㄧˊ、˙ㄋㄜ', pinyin: 'ní、ne', words: ['呢絨', '花呢'], sentence: '你今天想吃什麼呢？' },
+  { char: '住', level: 1, radical: '人', bopomofo: 'ㄓㄨˋ', pinyin: 'zhù', words: ['抓住', '居住'], sentence: '我們住在美麗的城市。' },
+  { char: '熱', level: 4, radical: '火', bopomofo: 'ㄖㄜˋ', pinyin: 'rè', words: ['熱情', '熱帶'], sentence: '夏天的天氣非常炎熱。' },
+  { char: '哪', level: 2, radical: '口', bopomofo: 'ㄋㄚˇ、ㄋㄟˇ、ㄋㄨㄛˊ、˙ㄋㄚ', pinyin: 'nǎ、něi、nuó、na', words: ['哪裏', '哪些'], sentence: '你比較喜歡哪一種水果？' },
+  { char: '同', level: 1, radical: '口', bopomofo: 'ㄊㄨㄥˊ、ㄊㄨㄥˋ', pinyin: 'tóng、tòng', words: ['同時', '不同'], sentence: '我和同學一起上學。' },
+  { char: '站', level: 2, radical: '立', bopomofo: 'ㄓㄢˋ', pinyin: 'zhàn', words: ['網站', '車站'], sentence: '不管等多久，我們都會在車站等你。' },
+  { char: '機', level: 4, radical: '木', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['機關', '機構'], sentence: '爸爸開飛機送我們出國旅行。' },
+  { char: '午', level: 1, radical: '十', bopomofo: 'ㄨˇ、˙ㄏㄨㄛ', pinyin: 'wǔ、huo', words: ['下午', '上午'], sentence: '我們中午一起吃飯。' },
+  { char: '租', level: 2, radical: '禾', bopomofo: 'ㄗㄨ', pinyin: 'zū', words: ['地租', '租界'], sentence: '我們租了一輛腳踏車。' },
+  { char: '識', level: 4, radical: '言', bopomofo: 'ㄕˋ、ㄓˋ', pinyin: 'shì、zhì', words: ['認識', '知識'], sentence: '我認識一位新朋友。' },
+  { char: '五', level: 1, radical: '二', bopomofo: 'ㄨˇ', pinyin: 'wǔ', words: ['五年', '十五'], sentence: '我今年五歲。' },
+  { char: '八', level: 1, radical: '八', bopomofo: 'ㄅㄚ', pinyin: 'bā', words: ['八年', '八戒'], sentence: '桌上放著八顆蘋果。' },
+  { char: '九', level: 1, radical: '乙', bopomofo: 'ㄐㄧㄡˇ', pinyin: 'jiǔ', words: ['九年', '九月'], sentence: '今天是九月九日。' },
+  { char: '漢', level: 3, radical: '水', bopomofo: 'ㄏㄢˋ', pinyin: 'hàn', words: ['武漢', '漢子'], sentence: '他是一位健壯的男子漢。' },
+  { char: '冷', level: 1, radical: '冫', bopomofo: 'ㄌㄥˇ', pinyin: 'lěng', words: ['冷笑', '冷靜'], sentence: '不管天氣多冷，弟弟都要出去玩球。' },
+  { char: '飛', level: 2, radical: '飛', bopomofo: 'ㄈㄟ', pinyin: 'fēi', words: ['飛機', '飛行'], sentence: '小鳥展開翅膀飛向天空。' },
+  { char: '候', level: 2, radical: '人', bopomofo: 'ㄏㄡˋ', pinyin: 'hòu', words: ['時候', '氣候'], sentence: '請耐心等候輪到你。' },
+  { char: '很', level: 2, radical: '彳', bopomofo: 'ㄏㄣˇ', pinyin: 'hěn', words: ['很多', '很大'], sentence: '今天天氣很晴朗。' },
+  { char: '二', level: 1, radical: '二', bopomofo: 'ㄦˋ', pinyin: 'èr', words: ['第二', '二人'], sentence: '我有二枝彩色筆。' },
+  { char: '衣', level: 1, radical: '衣', bopomofo: 'ㄧ、ㄧˋ', pinyin: 'yī、yì', words: ['衣服', '衣衫'], sentence: '今天很冷，要多穿衣服。' },
+  { char: '朋', level: 1, radical: '月', bopomofo: 'ㄆㄥˊ', pinyin: 'péng', words: ['朋友', '親朋'], sentence: '他是我最好的朋友。' },
+  { char: '歲', level: 3, radical: '止', bopomofo: 'ㄙㄨㄟˋ', pinyin: 'suì', words: ['萬歲', '歲月'], sentence: '弟弟今年五歲了。' },
+  { char: '歡', level: 4, radical: '欠', bopomofo: 'ㄏㄨㄢ', pinyin: 'huān', words: ['喜歡', '歡迎'], sentence: '我很喜歡吃冰淇淋。' },
+  { char: '面', level: 2, radical: '面', bopomofo: 'ㄇㄧㄢˋ', pinyin: 'miàn', words: ['方面', '面積'], sentence: '如果在路上碰面，就要記得打招呼。' },
+  { char: '那', level: 1, radical: '邑', bopomofo: 'ㄋㄚˋ、ㄋㄟˋ、ㄋㄚˇ、ㄋㄟˇ、ㄋㄚ、ㄋㄨㄛˊ', pinyin: 'nà、nèi、nǎ、něi、nā、nuó', words: ['那麼', '那些'], sentence: '請你把那本書拿給我。' },
+  { char: '係', level: 2, radical: '人', bopomofo: 'ㄒㄧˋ', pinyin: 'xì', words: ['關係', '係數'], sentence: '他和我有很好的關係。' },
+  { char: '什', level: 1, radical: '人', bopomofo: 'ㄕˊ、ㄕㄣˊ、ㄕㄜˊ', pinyin: 'shí、shén、shé', words: ['什麼', '布什'], sentence: '你今天想做什麼？' },
+  { char: '想', level: 3, radical: '心', bopomofo: 'ㄒㄧㄤˇ', pinyin: 'xiǎng', words: ['思想', '心想'], sentence: '只要多想幾種方法，就能找到解決問題的辦法。' },
+  { char: '商', level: 2, radical: '口', bopomofo: 'ㄕㄤ', pinyin: 'shāng', words: ['商品', '商業'], sentence: '媽媽去商店買菜。' },
+  { char: '錢', level: 4, radical: '金', bopomofo: 'ㄑㄧㄢˊ、ㄐㄧㄢˇ', pinyin: 'qián、jiǎn', words: ['金錢', '花錢'], sentence: '請問這件玩具要多少錢？' },
+  { char: '蘋', level: 4, radical: '艸', bopomofo: 'ㄆㄧㄣˊ、ㄆㄧㄥˊ', pinyin: 'pín、píng', words: ['蘋果', '蘋婆'], sentence: '我喜歡吃甜甜的蘋果。' },
+  { char: '六', level: 1, radical: '八', bopomofo: 'ㄌㄧㄡˋ、ㄌㄨˋ', pinyin: 'liù、lù', words: ['六年', '六個'], sentence: '我們班有六排座位。' },
+  { char: '四', level: 1, radical: '囗', bopomofo: 'ㄙˋ', pinyin: 'sì', words: ['四個', '四大'], sentence: '桌上放著四個杯子。' },
+  { char: '現', level: 2, radical: '玉', bopomofo: 'ㄒㄧㄢˋ', pinyin: 'xiàn', words: ['現在', '出現'], sentence: '現在是上課時間。' },
+  { char: '怎', level: 2, radical: '心', bopomofo: 'ㄗㄣˇ、ㄗㄜˇ', pinyin: 'zěn、zě', words: ['怎麼', '怎樣'], sentence: '你今天怎麼這麼晚到？' },
+  { char: '校', level: 2, radical: '木', bopomofo: 'ㄒㄧㄠˋ、ㄐㄧㄠˋ', pinyin: 'xiào、jiào', words: ['學校', '校名'], sentence: '即使學校很遠，他也堅持每天走路上學。' },
+  { char: '家', level: 2, radical: '宀', bopomofo: 'ㄐㄧㄚ、ㄍㄨ', pinyin: 'jiā、gū', words: ['國家', '大家'], sentence: '放學後我馬上回家。' },
+  { char: '都', level: 2, radical: '邑', bopomofo: 'ㄉㄨ、ㄉㄡ', pinyin: 'dū、dōu', words: ['首都', '成都'], sentence: '大家都準時到教室。' },
+  { char: '開', level: 3, radical: '門', bopomofo: 'ㄎㄞ', pinyin: 'kāi', words: ['開始', '開發'], sentence: '請你把窗戶打開透氣。' },
+  { char: '三', level: 1, radical: '一', bopomofo: 'ㄙㄢ、ㄙㄚ、ㄙㄢˋ', pinyin: 'sān、sā、sàn', words: ['三個', '三年'], sentence: '我畫了三隻小鳥。' },
+  { char: '喂', level: 3, radical: '口', bopomofo: 'ㄨㄟˋ', pinyin: 'wèi', words: ['喂入', '喂飼'], sentence: '喂，請問是誰打來的電話？' },
+  { char: '習', level: 2, radical: '羽', bopomofo: 'ㄒㄧˊ', pinyin: 'xí', words: ['學習', '習慣'], sentence: '我們每天練習寫生字。' },
+  { char: '十', level: 1, radical: '十', bopomofo: 'ㄕˊ', pinyin: 'shí', words: ['十分', '十年'], sentence: '今天是我十歲生日。' },
+  { char: '腦', level: 3, radical: '肉', bopomofo: 'ㄋㄠˇ', pinyin: 'nǎo', words: ['電腦', '腦袋'], sentence: '請小心保護自己的頭腦。' },
+  { char: '客', level: 2, radical: '宀', bopomofo: 'ㄎㄜˋ', pinyin: 'kè', words: ['遊客', '客戶'], sentence: '家裡來了幾位客人。' },
+  { char: '嗎', level: 3, radical: '口', bopomofo: '˙ㄇㄚ、ㄇㄚˇ', pinyin: 'ma、mǎ', words: ['幹嗎', '嗎啡'], sentence: '這不是肯定句，而是加了「嗎」的疑問句。' },
+  { char: '先', level: 1, radical: '儿', bopomofo: 'ㄒㄧㄢ、ㄒㄧㄢˋ', pinyin: 'xiān、xiàn', words: ['先生', '先進'], sentence: '請大家先排隊再進場。' },
+  { char: '太', level: 1, radical: '大', bopomofo: 'ㄊㄞˋ', pinyin: 'tài', words: ['太陽', '太監'], sentence: '如果天氣太熱，就要多喝水。' },
+  { char: '寫', level: 4, radical: '宀', bopomofo: 'ㄒㄧㄝˇ、ㄒㄧㄝˋ', pinyin: 'xiě、xiè', words: ['描寫', '寫作'], sentence: '我正在認真寫功課。' },
+  { char: '興', level: 4, radical: '臼', bopomofo: 'ㄒㄧㄥ、ㄒㄧㄥˋ', pinyin: 'xīng、xìng', words: ['高興', '興趣'], sentence: '我今天非常高興。' },
+  { char: '零', level: 3, radical: '雨', bopomofo: 'ㄌㄧㄥˊ、ㄌㄧㄢˊ', pinyin: 'líng、lián', words: ['零售', '零星'], sentence: '放學後我喜歡吃一點零食。' },
+  { char: '七', level: 1, radical: '一', bopomofo: 'ㄑㄧ', pinyin: 'qī', words: ['七年', '七月'], sentence: '一週有七天。' },
+  { char: '時', level: 2, radical: '日', bopomofo: 'ㄕˊ', pinyin: 'shí', words: ['時間', '時候'], sentence: '因為時間不夠，所以他加快腳步。' },
+  { char: '覺', level: 4, radical: '見', bopomofo: 'ㄐㄩㄝˊ、ㄐㄧㄠˋ', pinyin: 'jué、jiào', words: ['覺得', '感覺'], sentence: '弟弟每天晚上很早睡覺。' },
+  { char: '迎', level: 1, radical: '辵', bopomofo: 'ㄧㄥˊ、ㄧㄥˋ', pinyin: 'yíng、yìng', words: ['歡迎', '迎接'], sentence: '老師歡迎新同學加入。' },
+  { char: '錶', level: 4, radical: '金', bopomofo: 'ㄅㄧㄠˇ', pinyin: 'biǎo', words: ['手錶', '鐘錶'], sentence: '他戴著一支手錶。' },
+  { char: '班', level: 2, radical: '玉', bopomofo: 'ㄅㄢ', pinyin: 'bān', words: ['航班', '上班'], sentence: '我們班有三十位同學。' },
+  { char: '病', level: 2, radical: '疒', bopomofo: 'ㄅㄧㄥˋ', pinyin: 'bìng', words: ['疾病', '病人'], sentence: '他生病了在家休息。' },
+  { char: '啡', level: 2, radical: '口', bopomofo: 'ㄈㄟ', pinyin: 'fēi', words: ['咖啡', '嗎啡'], sentence: '爸爸喜歡喝一杯咖啡。' },
+  { char: '雞', level: 4, radical: '隹', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['雞蛋', '滷雞'], sentence: '農場裡養了很多雞。' },
+  { char: '身', level: 1, radical: '身', bopomofo: 'ㄕㄣ、ㄐㄩㄢ', pinyin: 'shēn、juān', words: ['身上', '身體'], sentence: '他的身體非常健康。' },
+  { char: '賣', level: 4, radical: '貝', bopomofo: 'ㄇㄞˋ', pinyin: 'mài', words: ['買賣', '拍賣'], sentence: '商店裡賣著各種水果。' },
+  { char: '真', level: 2, radical: '目', bopomofo: 'ㄓㄣ', pinyin: 'zhēn', words: ['真正', '真是'], sentence: '這件事情是真的嗎？' },
+  { char: '為', level: 4, radical: '爪', bopomofo: 'ㄨㄟˊ、ㄨㄟˋ', pinyin: 'wéi、wèi', words: ['因為', '以為'], sentence: '她因為生病沒有來上學。' },
+  { char: '咖', level: 1, radical: '口', bopomofo: 'ㄎㄚ', pinyin: 'kā', words: ['咖啡', '咖喱'], sentence: '爸爸喜歡喝一杯咖啡。' },
+  { char: '它', level: 1, radical: '宀', bopomofo: 'ㄊㄚ、ㄊㄨㄛ、ㄊㄨㄛˊ', pinyin: 'tā、tuō、tuó', words: ['它們', '其它'], sentence: '這隻玩偶，它是我的最愛。' },
+  { char: '踢', level: 4, radical: '足', bopomofo: 'ㄊㄧ', pinyin: 'tī', words: ['踢球', '踢腿'], sentence: '我們放學後一起踢足球。' },
+  { char: '員', level: 2, radical: '口', bopomofo: 'ㄩㄢˊ、ㄩㄣˊ、ㄩㄣˋ', pinyin: 'yuán、yún、yùn', words: ['人員', '委員'], sentence: '服務員寧可多解釋幾次，也不要讓客人誤會。' },
+  { char: '泳', level: 1, radical: '水', bopomofo: 'ㄩㄥˇ', pinyin: 'yǒng', words: ['游泳', '泳裝'], sentence: '夏天我最喜歡去游泳。' },
+  { char: '遊', level: 3, radical: '辵', bopomofo: 'ㄧㄡˊ', pinyin: 'yóu', words: ['旅遊', '遊客'], sentence: '我們星期天要去郊遊。' },
+  { char: '送', level: 2, radical: '辵', bopomofo: 'ㄙㄨㄥˋ', pinyin: 'sòng', words: ['送到', '送給'], sentence: '媽媽送我上學。' },
+  { char: '室', level: 2, radical: '宀', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['王室', '室內'], sentence: '我們正在教室裡上課。' },
+  { char: '以', level: 1, radical: '人', bopomofo: 'ㄧˇ', pinyin: 'yǐ', words: ['可以', '以及'], sentence: '我以認真的態度寫功課。' },
+  { char: '妻', level: 1, radical: '女', bopomofo: 'ㄑㄧ、ㄑㄧˋ', pinyin: 'qī、qì', words: ['妻子', '夫妻'], sentence: '爺爺很疼愛他的妻子。' },
+  { char: '思', level: 2, radical: '心', bopomofo: 'ㄙ、ㄙˋ、ㄙㄞ', pinyin: 'sī、sì、sāi', words: ['思想', '意思'], sentence: '請你仔細思考這個問題。' },
+  { char: '兩', level: 1, radical: '入', bopomofo: 'ㄌㄧㄤˇ', pinyin: 'liǎng', words: ['兩個', '兩種'], sentence: '桌上有兩顆蘋果。' },
+  { char: '進', level: 3, radical: '辵', bopomofo: 'ㄐㄧㄣˋ', pinyin: 'jìn', words: ['進行', '進入'], sentence: '除非排好隊伍，才能依序走進教室。' },
+  { char: '間', level: 3, radical: '門', bopomofo: 'ㄐㄧㄢ、ㄐㄧㄢˋ', pinyin: 'jiān、jiàn', words: ['時間', '之間'], sentence: '我們的教室在二樓中間。' },
+  { char: '過', level: 3, radical: '辵', bopomofo: 'ㄍㄨㄛˋ、ㄍㄨㄛ', pinyin: 'guò、guō', words: ['通過', '過程'], sentence: '他已經過了生日了。' },
+  { char: '斤', level: 1, radical: '斤', bopomofo: 'ㄐㄧㄣ', pinyin: 'jīn', words: ['公斤', '一斤'], sentence: '媽媽買了一斤蘋果。' },
+  { char: '晴', level: 3, radical: '日', bopomofo: 'ㄑㄧㄥˊ', pinyin: 'qíng', words: ['晴雯', '晴天'], sentence: '不管是晴天還是陰天，他都堅持去公園運動。' },
+  { char: '吧', level: 1, radical: '口', bopomofo: 'ㄅㄚ、˙ㄅㄚ', pinyin: 'bā、ba', words: ['網吧', '酒吧'], sentence: '我們一起去公園玩吧。' },
+  { char: '共', level: 1, radical: '八', bopomofo: 'ㄍㄨㄥˋ、ㄍㄨㄥ、ㄍㄨㄥˇ', pinyin: 'gòng、gōng、gǒng', words: ['共同', '公共'], sentence: '我們一共有五個人。' },
+  { char: '要', level: 2, radical: '襾', bopomofo: 'ㄧㄠˋ、ㄧㄠ', pinyin: 'yào、yāo', words: ['主要', '重要'], sentence: '你想要吃什麼點心？' },
+  { char: '息', level: 2, radical: '心', bopomofo: 'ㄒㄧˊ', pinyin: 'xí', words: ['信息', '消息'], sentence: '雖然只有短短的休息時間，但是大家都很珍惜。' },
+  { char: '助', level: 1, radical: '力', bopomofo: 'ㄓㄨˋ', pinyin: 'zhù', words: ['幫助', '協助'], sentence: '我請哥哥幫助我搬東西。' },
+  { char: '票', level: 2, radical: '示', bopomofo: 'ㄆㄧㄠˋ、ㄆㄧㄠ', pinyin: 'piào、piāo', words: ['投票', '股票'], sentence: '我買了一張電影票。' },
+  { char: '陰', level: 2, radical: '阜', bopomofo: 'ㄧㄣ、ㄧㄣˋ、ㄢ', pinyin: 'yīn、yìn、ān', words: ['陰謀', '陰陽'], sentence: '今天是陰天沒有太陽。' },
+  { char: '課', level: 4, radical: '言', bopomofo: 'ㄎㄜˋ', pinyin: 'kè', words: ['課程', '課題'], sentence: '今天的國語課非常有趣。' },
+  { char: '幫', level: 4, radical: '巾', bopomofo: 'ㄅㄤ', pinyin: 'bāng', words: ['幫助', '丐幫'], sentence: '我請哥哥幫忙搬桌子。' },
+  { char: '夫', level: 1, radical: '大', bopomofo: 'ㄈㄨ、ㄈㄨˊ', pinyin: 'fū、fú', words: ['夫人', '丈夫'], sentence: '爸爸是一位認真的農夫。' },
+  { char: '從', level: 2, radical: '彳', bopomofo: 'ㄘㄨㄥˊ、ㄗㄨㄥˋ、ㄘㄨㄥ、ㄗㄨㄥ', pinyin: 'cóng、zòng、cōng、zōng', words: ['從而', '從事'], sentence: '他從小就很喜歡畫畫。' },
+  { char: '找', level: 1, radical: '手', bopomofo: 'ㄓㄠˇ', pinyin: 'zhǎo', words: ['找到', '尋找'], sentence: '請你幫我找一下鉛筆。' },
+  { char: '游', level: 3, radical: '水', bopomofo: 'ㄧㄡˊ', pinyin: 'yóu', words: ['上游', '下游'], sentence: '夏天我最喜歡去游泳。' },
+  { char: '足', level: 1, radical: '足', bopomofo: 'ㄗㄨˊ、ㄐㄩˋ', pinyin: 'zú、jù', words: ['不足', '滿足'], sentence: '即使很累，他也堅持踢完整場足球。' },
+  { char: '遠', level: 3, radical: '辵', bopomofo: 'ㄩㄢˇ、ㄩㄢˋ', pinyin: 'yuǎn、yuàn', words: ['永遠', '遠遠'], sentence: '學校離我家不太遠。' },
+  { char: '汽', level: 1, radical: '水', bopomofo: 'ㄑㄧˋ', pinyin: 'qì', words: ['汽車', '汽水'], sentence: '我們一起搭汽車去玩。' },
+  { char: '姓', level: 1, radical: '女', bopomofo: 'ㄒㄧㄥˋ', pinyin: 'xìng', words: ['百姓', '姓名'], sentence: '請問你貴姓？' },
+  { char: '穿', level: 2, radical: '穴', bopomofo: 'ㄔㄨㄢ', pinyin: 'chuān', words: ['穿過', '身穿'], sentence: '今天她穿了一件新衣服。' },
+  { char: '孩', level: 2, radical: '子', bopomofo: 'ㄏㄞˊ', pinyin: 'hái', words: ['孩子', '小孩'], sentence: '這個小孩不但聰明，而且很有禮貌。' },
+  { char: '籃', level: 4, radical: '竹', bopomofo: 'ㄌㄢˊ', pinyin: 'lán', words: ['籃球', '籃板'], sentence: '我們放學後一起打籃球。' },
+  { char: '因', level: 1, radical: '囗', bopomofo: 'ㄧㄣ', pinyin: 'yīn', words: ['因為', '因此'], sentence: '因為下雨，所以我們沒有出門。' },
+  { char: '累', level: 2, radical: '糸', bopomofo: 'ㄌㄟˇ、ㄌㄟˋ、ㄌㄟˊ', pinyin: 'lěi、lèi、léi', words: ['累計', '積累'], sentence: '跑完步後我覺得很累。' },
+  { char: '顏', level: 4, radical: '頁', bopomofo: 'ㄧㄢˊ', pinyin: 'yán', words: ['顏色', '顏料'], sentence: '她的臉上帶著微笑的顏色。' },
+  { char: '丈', level: 1, radical: '一', bopomofo: 'ㄓㄤˋ', pinyin: 'zhàng', words: ['丈夫', '方丈'], sentence: '這條繩子大約有一丈長。' },
+  { char: '到', level: 1, radical: '刀', bopomofo: 'ㄉㄠˋ', pinyin: 'dào', words: ['得到', '達到'], sentence: '我準時到達學校。' },
+  { char: '公', level: 1, radical: '八', bopomofo: 'ㄍㄨㄥ', pinyin: 'gōng', words: ['公司', '公里'], sentence: '我們一起去公園玩溜滑梯。' },
+  { char: '雪', level: 2, radical: '雨', bopomofo: 'ㄒㄩㄝˇ、ㄒㄩㄝˋ', pinyin: 'xuě、xuè', words: ['白雪', '雪山'], sentence: '冬天山上下起了大雪。' },
+  { char: '搬', level: 3, radical: '手', bopomofo: 'ㄅㄢ', pinyin: 'bān', words: ['搬運', '搬遷'], sentence: '我們家上個月搬新家了。' },
+  { char: '纔', level: 4, radical: '糸', bopomofo: 'ㄘㄞˊ', pinyin: 'cái', words: ['剛纔', '方纔'], sentence: '他練習了很久纔學會騎車。' },
+  { char: '半', level: 1, radical: '十', bopomofo: 'ㄅㄢˋ', pinyin: 'bàn', words: ['一半', '半天'], sentence: '現在是七點半。' },
+  { char: '地', level: 1, radical: '土', bopomofo: 'ㄉㄧˋ、˙ㄉㄜ', pinyin: 'dì、de', words: ['地方', '地區'], sentence: '農夫在田地裡種菜。' },
+  { char: '香', level: 2, radical: '香', bopomofo: 'ㄒㄧㄤ', pinyin: 'xiāng', words: ['香港', '香味'], sentence: '廚房飄來陣陣香味。' },
+  { char: '雙', level: 4, radical: '隹', bopomofo: 'ㄕㄨㄤ、ㄕㄨㄤˋ', pinyin: 'shuāng、shuàng', words: ['雙方', '雙手'], sentence: '她買了一雙新鞋子。' },
+  { char: '業', level: 3, radical: '木', bopomofo: 'ㄧㄝˋ、ㄋㄧㄝˋ', pinyin: 'yè、niè', words: ['企業', '工業'], sentence: '如果認真完成作業，成績就會慢慢進步。' },
+  { char: '阿', level: 1, radical: '阜', bopomofo: 'ㄜ、ㄚ、ㄚˋ', pinyin: 'ē、ā、à', words: ['阿哥', '阿里'], sentence: '阿姨送我一份禮物。' },
+  { char: '酒', level: 2, radical: '酉', bopomofo: 'ㄐㄧㄡˇ', pinyin: 'jiǔ', words: ['酒店', '喝酒'], sentence: '爺爺喝了一杯葡萄酒。' },
+  { char: '乎', level: 1, radical: '丿', bopomofo: 'ㄏㄨ、ㄏㄨˊ', pinyin: 'hū、hú', words: ['幾乎', '似乎'], sentence: '他似乎很喜歡這本書。' },
+  { char: '己', level: 1, radical: '己', bopomofo: 'ㄐㄧˇ', pinyin: 'jǐ', words: ['自己', '知己'], sentence: '他能自己整理書包。' },
+  { char: '級', level: 2, radical: '糸', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['各級', '本級'], sentence: '這個班級既團結又活潑。' },
+  { char: '音', level: 2, radical: '音', bopomofo: 'ㄧㄣ、ㄧㄣˋ', pinyin: 'yīn、yìn', words: ['聲音', '音樂'], sentence: '教室裡傳來悅耳的音樂。' },
+  { char: '般', level: 2, radical: '舟', bopomofo: 'ㄅㄢ、ㄆㄢˊ、ㄅㄛ', pinyin: 'bān、pán、bō', words: ['一般', '這般'], sentence: '今天天氣跟昨天一般晴朗。' },
+  { char: '葡', level: 3, radical: '艸', bopomofo: 'ㄆㄨˊ', pinyin: 'pú', words: ['葡萄', '葡語'], sentence: '我喜歡吃甜甜的葡萄。' },
+  { char: '季', level: 1, radical: '子', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['季節', '季度'], sentence: '秋季的樹葉會變黃。' },
+  { char: '示', level: 1, radical: '示', bopomofo: 'ㄑㄧˊ、ㄕˋ', pinyin: 'qí、shì', words: ['表示', '顯示'], sentence: '老師出示正確的答案。' },
+  { char: '刻', level: 1, radical: '刀', bopomofo: 'ㄎㄜˋ、ㄎㄜ', pinyin: 'kè、kē', words: ['立刻', '時刻'], sentence: '他立刻跑去幫忙。' },
+  { char: '秋', level: 2, radical: '禾', bopomofo: 'ㄑㄧㄡ', pinyin: 'qiū', words: ['春秋', '秋天'], sentence: '秋天的樹葉變成金黃色。' },
+  { char: '層', level: 4, radical: '尸', bopomofo: 'ㄘㄥˊ', pinyin: 'céng', words: ['一層', '基層'], sentence: '這棟大樓一共有十層樓。' },
+  { char: '又', level: 1, radical: '又', bopomofo: 'ㄧㄡˋ', pinyin: 'yòu', words: ['又稱', '又名'], sentence: '弟弟又長高了一點。' },
+  { char: '敢', level: 3, radical: '攴', bopomofo: 'ㄍㄢˇ', pinyin: 'gǎn', words: ['不敢', '勇敢'], sentence: '他很勇敢地舉手發言。' },
+  { char: '鍊', level: 4, radical: '金', bopomofo: 'ㄌㄧㄢˋ', pinyin: 'liàn', words: ['鍛鍊', '項鍊'], sentence: '她戴著一條漂亮的項鍊。' },
+  { char: '冒', level: 2, radical: '冂', bopomofo: 'ㄇㄠˋ、ㄇㄛˋ', pinyin: 'mào、mò', words: ['冒險', '感冒'], sentence: '他不小心感冒了。' },
+  { char: '護', level: 4, radical: '言', bopomofo: 'ㄏㄨˋ', pinyin: 'hù', words: ['保護', '維護'], sentence: '醫生和護士都很照顧病人。' },
+  { char: '末', level: 1, radical: '木', bopomofo: 'ㄇㄛˋ', pinyin: 'mò', words: ['那末', '清末'], sentence: '週末我們一起去爬山。' },
+  { char: '掃', level: 2, radical: '手', bopomofo: 'ㄙㄠˇ、ㄙㄠˋ', pinyin: 'sǎo、sào', words: ['掃描', '橫掃'], sentence: '這不是隨便打掃，而是仔細清潔每個角落。' },
+  { char: '願', level: 4, radical: '頁', bopomofo: 'ㄩㄢˋ', pinyin: 'yuàn', words: ['願意', '志願'], sentence: '我願意幫助有困難的同學。' },
+  { char: '燒', level: 4, radical: '火', bopomofo: 'ㄕㄠ', pinyin: 'shāo', words: ['燃燒', '火燒'], sentence: '媽媽在廚房燒菜。' },
+  { char: '忘', level: 1, radical: '心', bopomofo: 'ㄨㄤˋ、ㄨㄤˊ', pinyin: 'wàng、wáng', words: ['忘記', '難忘'], sentence: '我忘記帶課本了。' },
+  { char: '成', level: 1, radical: '戈', bopomofo: 'ㄔㄥˊ', pinyin: 'chéng', words: ['成為', '形成'], sentence: '他終於完成了作業。' },
+  { char: '境', level: 3, radical: '土', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['環境', '境內'], sentence: '即使環境有點吵雜，他也能專心讀書。' },
+  { char: '久', level: 1, radical: '丿', bopomofo: 'ㄐㄧㄡˇ', pinyin: 'jiǔ', words: ['不久', '悠久'], sentence: '我們很久沒見面了。' },
+  { char: '易', level: 1, radical: '日', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['容易', '貿易'], sentence: '這道題目很容易。' },
+  { char: '颳', level: 4, radical: '風', bopomofo: 'ㄍㄨㄚ', pinyin: 'guā', words: ['颳風', '颳倒'], sentence: '外面颳起了強烈的風。' },
+  { char: '聲', level: 4, radical: '耳', bopomofo: 'ㄕㄥ', pinyin: 'shēng', words: ['一聲', '聲音'], sentence: '教室裡傳來朗讀的聲音。' },
+  { char: '環', level: 4, radical: '玉', bopomofo: 'ㄏㄨㄢˊ', pinyin: 'huán', words: ['環境', '循環'], sentence: '我們要保護生活的環境。' },
+  { char: '梯', level: 2, radical: '木', bopomofo: 'ㄊㄧ', pinyin: 'tī', words: ['階梯', '樓梯'], sentence: '我們走樓梯上教室。' },
+  { char: '更', level: 1, radical: '曰', bopomofo: 'ㄍㄥ、ㄐㄧㄥ、ㄍㄥˋ', pinyin: 'gēng、jīng、gèng', words: ['更加', '更是'], sentence: '他今天跑得更快了。' },
+  { char: '褲', level: 4, radical: '衣', bopomofo: 'ㄎㄨˋ', pinyin: 'kù', words: ['褲子', '衣褲'], sentence: '他穿了一條牛仔褲。' },
+  { char: '加', level: 1, radical: '力', bopomofo: 'ㄐㄧㄚ', pinyin: 'jiā', words: ['參加', '增加'], sentence: '請把兩個數字相加。' },
+  { char: '賓', level: 3, radical: '貝', bopomofo: 'ㄅㄧㄣ、ㄅㄧㄣˋ', pinyin: 'bīn、bìn', words: ['賓館', '貴賓'], sentence: '學校邀請了許多貴賓。' },
+  { char: '目', level: 1, radical: '目', bopomofo: 'ㄇㄨˋ', pinyin: 'mù', words: ['目前', '項目'], sentence: '他認真地注目黑板。' },
+  { char: '雲', level: 3, radical: '雨', bopomofo: 'ㄩㄣˊ', pinyin: 'yún', words: ['雲南', '雲集'], sentence: '天空飄著白色的雲朵。' },
+  { char: '夏', level: 2, radical: '夊', bopomofo: 'ㄒㄧㄚˋ、ㄐㄧㄚˇ', pinyin: 'xià、jiǎ', words: ['夏天', '江夏'], sentence: '夏天的天氣非常炎熱。' },
+  { char: '賽', level: 4, radical: '貝', bopomofo: 'ㄙㄞˋ', pinyin: 'sài', words: ['比賽', '聯賽'], sentence: '我們參加了學校的運動賽事。' },
+  { char: '萄', level: 3, radical: '艸', bopomofo: 'ㄊㄠˊ', pinyin: 'táo', words: ['葡萄'], sentence: '因為葡萄很新鮮，所以大家都搶著吃。' },
+  { char: '剛', level: 2, radical: '刀', bopomofo: 'ㄍㄤ', pinyin: 'gāng', words: ['剛纔', '剛剛'], sentence: '我剛剛才寫完功課。' },
+  { char: '裙', level: 3, radical: '衣', bopomofo: 'ㄑㄩㄣˊ', pinyin: 'qún', words: ['裙子', '圍裙'], sentence: '她穿了一件漂亮的裙子。' },
+  { char: '鞋', level: 4, radical: '革', bopomofo: 'ㄒㄧㄝˊ', pinyin: 'xié', words: ['皮鞋', '鞋子'], sentence: '她穿了一雙新的鞋子。' },
+  { char: '換', level: 3, radical: '手', bopomofo: 'ㄏㄨㄢˋ', pinyin: 'huàn', words: ['交換', '轉換'], sentence: '請你換一雙乾淨的鞋子。' },
+  { char: '健', level: 2, radical: '人', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['健康', '健全'], sentence: '運動能讓身體更健康。' },
+  { char: '板', level: 1, radical: '木', bopomofo: 'ㄅㄢˇ', pinyin: 'bǎn', words: ['板塊', '板栗'], sentence: '老師在黑板上寫字。' },
+  { char: '練', level: 4, radical: '糸', bopomofo: 'ㄌㄧㄢˋ', pinyin: 'liàn', words: ['訓練', '教練'], sentence: '我們每天都要練習寫字。' },
+  { char: '須', level: 3, radical: '頁', bopomofo: 'ㄒㄩ', pinyin: 'xū', words: ['必須', '無須'], sentence: '做功課前必須先洗手。' },
+  { char: '育', level: 1, radical: '肉', bopomofo: 'ㄩˋ', pinyin: 'yù', words: ['教育', '體育'], sentence: '學校重視體育活動。' },
+  { char: '借', level: 2, radical: '人', bopomofo: 'ㄐㄧㄝˋ', pinyin: 'jiè', words: ['借鑑', '借款'], sentence: '只要辦好借書證，就能到圖書館借書。' },
+  { char: '啤', level: 2, radical: '口', bopomofo: 'ㄆㄧˊ', pinyin: 'pí', words: ['啤酒', '黑啤'], sentence: '爸爸偶爾喝一杯啤酒。' },
+  { char: '淨', level: 2, radical: '水', bopomofo: 'ㄐㄧㄥˋ', pinyin: 'jìng', words: ['乾淨', '淨化'], sentence: '請保持教室乾淨整潔。' },
+  { char: '輕', level: 3, radical: '車', bopomofo: 'ㄑㄧㄥ', pinyin: 'qīng', words: ['年輕', '輕輕'], sentence: '我寧可放輕腳步，也不要吵醒正在睡覺的弟弟。' },
+  { char: '樹', level: 4, radical: '木', bopomofo: 'ㄕㄨˋ', pinyin: 'shù', words: ['樹立', '樹木'], sentence: '公園裡種了很多大樹。' },
+  { char: '禮', level: 4, radical: '示', bopomofo: 'ㄌㄧˇ', pinyin: 'lǐ', words: ['禮部', '禮物'], sentence: '今天是姐姐的生日，我準備了禮物。' },
+  { char: '冬', level: 1, radical: '冫', bopomofo: 'ㄉㄨㄥ', pinyin: 'dōng', words: ['冬季', '冬天'], sentence: '冬天的天氣非常寒冷。' },
+  { char: '圖', level: 3, radical: '囗', bopomofo: 'ㄊㄨˊ', pinyin: 'tú', words: ['圖片', '地圖'], sentence: '請看看這張地圖。' },
+  { char: '節', level: 3, radical: '竹', bopomofo: 'ㄐㄧㄝˊ', pinyin: 'jié', words: ['季節', '調節'], sentence: '端午節我們一起吃粽子。' },
+  { char: '衫', level: 2, radical: '衣', bopomofo: 'ㄕㄢ', pinyin: 'shān', words: ['衣衫', '襯衫'], sentence: '他穿了一件白色襯衫。' },
+  { char: '容', level: 2, radical: '宀', bopomofo: 'ㄖㄨㄥˊ', pinyin: 'róng', words: ['內容', '容易'], sentence: '請你容許我解釋一下。' },
+  { char: '矮', level: 3, radical: '矢', bopomofo: 'ㄞˇ', pinyin: 'ǎi', words: ['矮子', '矮小'], sentence: '雖然他長得比較矮小，但是跑步速度很快。' },
+  { char: '熊', level: 3, radical: '火', bopomofo: 'ㄒㄩㄥˊ', pinyin: 'xióng', words: ['熊掌', '熊貓'], sentence: '動物園裡有一隻大熊。' },
+  { char: '聞', level: 3, radical: '耳', bopomofo: 'ㄨㄣˊ、ㄨㄣˋ', pinyin: 'wén、wèn', words: ['新聞', '聞名'], sentence: '我每天看電視新聞。' },
+  { char: '廚', level: 4, radical: '广', bopomofo: 'ㄔㄨˊ', pinyin: 'chú', words: ['廚房', '大廚'], sentence: '媽媽在廚房裡準備晚餐。' },
+  { char: '必', level: 1, radical: '心', bopomofo: 'ㄅㄧˋ', pinyin: 'bì', words: ['必須', '必要'], sentence: '考試前必須先複習。' },
+  { char: '鍛', level: 4, radical: '金', bopomofo: 'ㄉㄨㄢˋ', pinyin: 'duàn', words: ['鍛鍊', '鍛造'], sentence: '他每天鍛鍊身體。' },
+  { char: '鉛', level: 3, radical: '金', bopomofo: 'ㄑㄧㄢ、ㄧㄢˊ', pinyin: 'qiān、yán', words: ['鉛筆', '鉛直'], sentence: '這枝鉛筆不但好寫，而且也很好握。' },
+  { char: '陽', level: 3, radical: '阜', bopomofo: 'ㄧㄤˊ', pinyin: 'yáng', words: ['襄陽', '太陽'], sentence: '太陽從東邊慢慢升起。' },
+  { char: '慣', level: 3, radical: '心', bopomofo: 'ㄍㄨㄢˋ', pinyin: 'guàn', words: ['習慣', '慣例'], sentence: '早睡早起是個好習慣。' },
+  { char: '澡', level: 4, radical: '水', bopomofo: 'ㄗㄠˇ', pinyin: 'zǎo', words: ['洗澡', '澡堂'], sentence: '睡覺前要記得洗澡。' },
+  { char: '選', level: 4, radical: '辵', bopomofo: 'ㄒㄩㄢˇ', pinyin: 'xuǎn', words: ['選舉', '選擇'], sentence: '我們一起選出班長。' },
+  { char: '帽', level: 3, radical: '巾', bopomofo: 'ㄇㄠˋ', pinyin: 'mào', words: ['帽子', '草帽'], sentence: '弟弟戴著一頂紅色帽子。' },
+  { char: '擇', level: 4, radical: '手', bopomofo: 'ㄗㄜˊ、ㄓㄞˊ', pinyin: 'zé、zhái', words: ['選擇', '抉擇'], sentence: '他很難選擇要吃哪一種蛋糕。' },
+  { char: '婚', level: 2, radical: '女', bopomofo: 'ㄏㄨㄣ', pinyin: 'hūn', words: ['結婚', '婚姻'], sentence: '除非準備充分，才能安心舉辦婚禮。' },
+  { char: '腿', level: 3, radical: '肉', bopomofo: 'ㄊㄨㄟˇ', pinyin: 'tuǐ', words: ['雙腿', '左腿'], sentence: '他既伸展雙腿，又活動了手臂。' },
+  { char: '蕉', level: 4, radical: '艸', bopomofo: 'ㄐㄧㄠ、ㄑㄧㄠˊ', pinyin: 'jiāo、qiáo', words: ['香蕉', '芭蕉'], sentence: '我喜歡吃甜甜的香蕉。' },
+  { char: '根', level: 2, radical: '木', bopomofo: 'ㄍㄣ', pinyin: 'gēn', words: ['根據', '根本'], sentence: '這棵樹的根長得很深。' },
+  { char: '輛', level: 4, radical: '車', bopomofo: 'ㄌㄧㄤˋ', pinyin: 'liàng', words: ['車輛', '一輛'], sentence: '停車場停了很多輛汽車。' },
+  { char: '演', level: 3, radical: '水', bopomofo: 'ㄧㄢˇ', pinyin: 'yǎn', words: ['演出', '演習'], sentence: '我們準備了一場音樂表演。' },
+  { char: '放', level: 1, radical: '攴', bopomofo: 'ㄈㄤˋ、ㄈㄤˇ', pinyin: 'fàng、fǎng', words: ['開放', '放在'], sentence: '請把書放回書架。' },
+  { char: '郵', level: 3, radical: '邑', bopomofo: 'ㄧㄡˊ', pinyin: 'yóu', words: ['郵政', '郵電'], sentence: '我去郵局寄了一封信。' },
+  { char: '超', level: 3, radical: '走', bopomofo: 'ㄔㄠ', pinyin: 'chāo', words: ['超過', '超越'], sentence: '這不是普通的商店，而是很大的超級市場。' },
+  { char: '注', level: 1, radical: '水', bopomofo: 'ㄓㄨˋ', pinyin: 'zhù', words: ['注意', '關注'], sentence: '請你注意聽老師說話。' },
+  { char: '祝', level: 2, radical: '示', bopomofo: 'ㄓㄨˋ', pinyin: 'zhù', words: ['慶祝', '祝賀'], sentence: '大家一起祝他生日快樂。' },
+  { char: '舉', level: 4, radical: '臼', bopomofo: 'ㄐㄩˇ', pinyin: 'jǔ', words: ['舉行', '選舉'], sentence: '請大家舉手發言。' },
+  { char: '績', level: 4, radical: '糸', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['成績', '業績'], sentence: '他這學期的成績進步很多。' },
+  { char: '聰', level: 4, radical: '耳', bopomofo: 'ㄘㄨㄥ', pinyin: 'cōng', words: ['聰明', '聰慧'], sentence: '他是一位聰明的學生。' },
+  { char: '檢', level: 4, radical: '木', bopomofo: 'ㄐㄧㄢˇ', pinyin: 'jiǎn', words: ['檢查', '檢察'], sentence: '醫生幫他做健康檢查。' },
+  { char: '居', level: 1, radical: '尸', bopomofo: 'ㄐㄩ、ㄐㄧ', pinyin: 'jū、jī', words: ['居民', '居住'], sentence: '爺爺喜歡鄉居生活。' },
+  { char: '朵', level: 1, radical: '木', bopomofo: 'ㄉㄨㄛˇ', pinyin: 'duǒ', words: ['耳朵', '一朵'], sentence: '花園裡開了一朵花。' },
+  { char: '瞭', level: 4, radical: '目', bopomofo: 'ㄌㄧㄠˇ、ㄌㄧㄠˋ', pinyin: 'liǎo、liào', words: ['瞭解', '瞭望'], sentence: '我終於明瞭這個問題的答案。' },
+  { char: '簡', level: 4, radical: '竹', bopomofo: 'ㄐㄧㄢˇ', pinyin: 'jiǎn', words: ['簡單', '簡稱'], sentence: '老師簡單說明了這次的作業。' },
+  { char: '疼', level: 2, radical: '疒', bopomofo: 'ㄊㄥˊ', pinyin: 'téng', words: ['疼痛', '心疼'], sentence: '奶奶非常疼愛我。' },
+  { char: '當', level: 3, radical: '田', bopomofo: 'ㄉㄤ、ㄉㄤˋ、ㄉㄤˇ', pinyin: 'dāng、dàng、dǎng', words: ['當時', '當然'], sentence: '他當上了班長。' },
+  { char: '舒', level: 3, radical: '舌', bopomofo: 'ㄕㄨ', pinyin: 'shū', words: ['舒服', '舒適'], sentence: '洗完澡後感覺很舒服。' },
+  { char: '響', level: 4, radical: '音', bopomofo: 'ㄒㄧㄤˇ', pinyin: 'xiǎng', words: ['影響', '聲響'], sentence: '教室裡響起了下課鐘聲。' },
+  { char: '康', level: 2, radical: '广', bopomofo: 'ㄎㄤ', pinyin: 'kāng', words: ['健康', '康熙'], sentence: '祝爺爺身體健康。' },
+  { char: '襯', level: 4, radical: '衣', bopomofo: 'ㄔㄣˋ', pinyin: 'chèn', words: ['襯衫', '襯衣'], sentence: '他穿了一件白色襯衫。' },
+  { char: '遲', level: 4, radical: '辵', bopomofo: 'ㄔˊ、ㄓˋ', pinyin: 'chí、zhì', words: ['遲疑', '遲早'], sentence: '他今天上學遲到了。' },
+  { char: '複', level: 4, radical: '衣', bopomofo: 'ㄈㄨˋ', pinyin: 'fù', words: ['複雜', '重複'], sentence: '老師讓我們複習今天的課程。' },
+  { char: '據', level: 4, radical: '手', bopomofo: 'ㄐㄩˋ', pinyin: 'jù', words: ['根據', '數據'], sentence: '根據天氣預報，明天會下雨。' },
+  { char: '刷', level: 2, radical: '刀', bopomofo: 'ㄕㄨㄚ、ㄕㄨㄚˋ', pinyin: 'shuā、shuà', words: ['印刷', '刷刷'], sentence: '不管多晚，弟弟都會記得刷牙。' },
+  { char: '重', level: 2, radical: '里', bopomofo: 'ㄓㄨㄥˋ、ㄔㄨㄥˊ', pinyin: 'zhòng、chóng', words: ['重要', '重點'], sentence: '這個箱子非常沉重。' },
+  { char: '需', level: 3, radical: '雨', bopomofo: 'ㄒㄩ、ㄖㄨˊ', pinyin: 'xū、rú', words: ['需要', '需求'], sentence: '只要有需要，同學們就會互相幫忙。' },
+  { char: '樓', level: 4, radical: '木', bopomofo: 'ㄌㄡˊ', pinyin: 'lóu', words: ['城樓', '樓上'], sentence: '我們家住在三樓。' },
+  { char: '煩', level: 3, radical: '火', bopomofo: 'ㄈㄢˊ', pinyin: 'fán', words: ['麻煩', '煩惱'], sentence: '這道題目讓我很煩惱。' },
+  { char: '孤', level: 2, radical: '子', bopomofo: 'ㄍㄨ', pinyin: 'gū', words: ['孤立', '孤獨'], sentence: '那隻小狗看起來很孤單。' },
+  { char: '辛', level: 1, radical: '辛', bopomofo: 'ㄒㄧㄣ', pinyin: 'xīn', words: ['辛勤', '辛苦'], sentence: '農夫每天辛苦耕種。' },
+  { char: '材', level: 1, radical: '木', bopomofo: 'ㄘㄞˊ', pinyin: 'cái', words: ['材料', '木材'], sentence: '工人準備了建築材料。' },
+  { char: '替', level: 3, radical: '曰', bopomofo: 'ㄊㄧˋ', pinyin: 'tì', words: ['代替', '替代'], sentence: '姐姐替我完成了作業。' },
+  { char: '愉', level: 3, radical: '心', bopomofo: 'ㄩˊ', pinyin: 'yú', words: ['愉快', '愉悅'], sentence: '今天是愉快的一天。' },
+  { char: '美', level: 2, radical: '羊', bopomofo: 'ㄇㄟˇ', pinyin: 'měi', words: ['美國', '美元'], sentence: '公園裡的花開得很美麗。' },
+  { char: '永', level: 1, radical: '水', bopomofo: 'ㄩㄥˇ', pinyin: 'yǒng', words: ['永遠', '永樂'], sentence: '我寧可永遠記得這件事，也不要忘記。' },
+  { char: '惱', level: 3, radical: '心', bopomofo: 'ㄋㄠˇ', pinyin: 'nǎo', words: ['煩惱', '惱怒'], sentence: '除非把問題解決，才不會一直感到煩惱。' },
+  { char: '趟', level: 4, radical: '走', bopomofo: 'ㄊㄤˋ', pinyin: 'tàng', words: ['一趟', '兩趟'], sentence: '我們去了一趟動物園。' },
+  { char: '疑', level: 3, radical: '疋', bopomofo: 'ㄧˊ', pinyin: 'yí', words: ['懷疑', '無疑'], sentence: '他對這個答案有點懷疑。' },
+  { char: '藝', level: 4, radical: '艸', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['藝術', '文藝'], sentence: '她很有繪畫的藝術天分。' },
+  { char: '暖', level: 3, radical: '日', bopomofo: 'ㄋㄨㄢˇ、ㄒㄩㄢ', pinyin: 'nuǎn、xuān', words: ['溫暖', '暖流'], sentence: '冬天穿上暖和的外套。' },
+  { char: '際', level: 3, radical: '阜', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['國際', '實際'], sentence: '不管在國際場合還是校內活動，他都很有禮貌。' },
+  { char: '苦', level: 2, radical: '艸', bopomofo: 'ㄎㄨˇ', pinyin: 'kǔ', words: ['痛苦', '辛苦'], sentence: '這杯咖啡的味道很苦。' },
+  { char: '厭', level: 3, radical: '厂', bopomofo: 'ㄧㄢˋ、ㄧㄢ', pinyin: 'yàn、yān', words: ['討厭', '厭惡'], sentence: '他討厭吃苦苦的青菜。' },
+  { char: '扮', level: 1, radical: '手', bopomofo: 'ㄅㄢˋ', pinyin: 'bàn', words: ['打扮', '扮演'], sentence: '她今天打扮得很漂亮。' },
+  { char: '戴', level: 4, radical: '戈', bopomofo: 'ㄉㄞˋ', pinyin: 'dài', words: ['擁戴', '穿戴'], sentence: '弟弟戴著一頂帽子。' },
+  { char: '卡', level: 1, radical: '卜', bopomofo: 'ㄎㄚˇ、ㄑㄧㄚˇ', pinyin: 'kǎ、qiǎ', words: ['卡車', '卡拉'], sentence: '我收到一張生日卡片。' },
+  { char: '優', level: 4, radical: '人', bopomofo: 'ㄧㄡ', pinyin: 'yōu', words: ['優勢', '優秀'], sentence: '他的表現非常優秀。' },
+  { char: '敲', level: 3, radical: '攴', bopomofo: 'ㄑㄧㄠ', pinyin: 'qiāo', words: ['敲門', '敲打'], sentence: '有人在敲教室的門。' },
+  { char: '羨', level: 3, radical: '羊', bopomofo: 'ㄒㄧㄢˋ', pinyin: 'xiàn', words: ['羨慕', '豔羨'], sentence: '如果表現得很好，就會讓人羨慕。' },
+  { char: '憐', level: 4, radical: '心', bopomofo: 'ㄌㄧㄢˊ', pinyin: 'lián', words: ['可憐', '憐憫'], sentence: '那隻流浪貓看起來很可憐。' },
+  { char: '溫', level: 3, radical: '水', bopomofo: 'ㄨㄣ', pinyin: 'wēn', words: ['溫度', '氣溫'], sentence: '今天的氣溫非常宜人。' },
+  { char: '憶', level: 4, radical: '心', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['記憶', '回憶'], sentence: '這是一段美好的回憶。' },
+  { char: '肯', level: 2, radical: '肉', bopomofo: 'ㄎㄣˇ、ㄎㄥˇ', pinyin: 'kěn、kěng', words: ['肯定', '不肯'], sentence: '如果他肯努力，就一定能進步。' },
+  { char: '村', level: 1, radical: '木', bopomofo: 'ㄘㄨㄣ', pinyin: 'cūn', words: ['農村', '鄉村'], sentence: '爺爺住在一個小村莊。' },
+  { char: '諒', level: 4, radical: '言', bopomofo: 'ㄌㄧㄤˋ、ㄌㄧㄤˊ', pinyin: 'liàng、liáng', words: ['原諒', '諒解'], sentence: '請你原諒我的錯誤。' },
+  { char: '寒', level: 3, radical: '宀', bopomofo: 'ㄏㄢˊ', pinyin: 'hán', words: ['寒冷', '寒意'], sentence: '冬天的天氣非常寒冷。' },
+  { char: '命', level: 2, radical: '口', bopomofo: 'ㄇㄧㄥˋ', pinyin: 'mìng', words: ['革命', '命令'], sentence: '醫生救回了病人的生命。' },
+  { char: '柿', level: 2, radical: '木', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['柿子', '柿餅'], sentence: '秋天是柿子成熟的季節。' },
+  { char: '速', level: 2, radical: '辵', bopomofo: 'ㄙㄨˋ', pinyin: 'sù', words: ['迅速', '速度'], sentence: '請不要在走廊快速奔跑。' },
+  { char: '菸', level: 3, radical: '艸', bopomofo: 'ㄧㄢ、ㄩˊ', pinyin: 'yān、yú', words: ['菸草', '吸菸'], sentence: '爸爸戒掉了抽菸的習慣。' },
+  { char: '將', level: 2, radical: '寸', bopomofo: 'ㄐㄧㄤ、ㄐㄧㄤˋ、ㄑㄧㄤ', pinyin: 'jiāng、jiàng、qiāng', words: ['將軍', '將領'], sentence: '我們將要去郊遊。' },
+  { char: '積', level: 4, radical: '禾', bopomofo: 'ㄐㄧ', pinyin: 'jī', words: ['面積', '積極'], sentence: '請計算這個長方形的面積。' },
+  { char: '映', level: 2, radical: '日', bopomofo: 'ㄧㄥˋ', pinyin: 'yìng', words: ['反映', '放映'], sentence: '即使天色已暗，湖面也映照著美麗的月光。' },
+  { char: '嚴', level: 4, radical: '口', bopomofo: 'ㄧㄢˊ', pinyin: 'yán', words: ['嚴重', '嚴格'], sentence: '老師對我們的要求很嚴格。' },
+  { char: '母', level: 1, radical: '毋', bopomofo: 'ㄇㄨˇ', pinyin: 'mǔ', words: ['母親', '父母'], sentence: '今天是母親節。' },
+  { char: '髒', level: 4, radical: '骨', bopomofo: 'ㄗㄤ、ㄗㄤˇ', pinyin: 'zāng、zǎng', words: ['骯髒', '髒話'], sentence: '請不要把衣服弄髒。' },
+  { char: '察', level: 3, radical: '宀', bopomofo: 'ㄔㄚˊ', pinyin: 'chá', words: ['考察', '觀察'], sentence: '即使警察很忙碌，也依然耐心維持交通秩序。' },
+  { char: '製', level: 4, radical: '衣', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['製造', '研製'], sentence: '工廠正在製作新產品。' },
+  { char: '申', level: 1, radical: '田', bopomofo: 'ㄕㄣ', pinyin: 'shēn', words: ['申請', '申報'], sentence: '他申請參加畫畫比賽。' },
+  { char: '言', level: 1, radical: '言', bopomofo: 'ㄧㄢˊ、ㄧㄣˊ', pinyin: 'yán、yín', words: ['語言', '而言'], sentence: '請你說出真心話語言。' },
+  { char: '度', level: 2, radical: '广', bopomofo: 'ㄉㄨˋ、ㄉㄨㄛˋ', pinyin: 'dù、duò', words: ['制度', '百度'], sentence: '今天的氣溫大約三十度。' },
+  { char: '播', level: 4, radical: '手', bopomofo: 'ㄅㄛˋ', pinyin: 'bò', words: ['傳播', '直播'], sentence: '學校廣播提醒大家集合。' },
+  { char: '尤', level: 1, radical: '尢', bopomofo: 'ㄧㄡˊ', pinyin: 'yóu', words: ['尤其', '尤為'], sentence: '今天天氣尤其晴朗。' },
+  { char: '抬', level: 2, radical: '手', bopomofo: 'ㄊㄞˊ', pinyin: 'tái', words: ['抬頭', '抬起'], sentence: '請幫我一起抬桌子。' },
+  { char: '壓', level: 4, radical: '土', bopomofo: 'ㄧㄚ', pinyin: 'yā', words: ['壓力', '鎮壓'], sentence: '請不要壓壞這些花朵。' },
+  { char: '爾', level: 4, radical: '爻', bopomofo: 'ㄦˇ', pinyin: 'ěr', words: ['偶爾', '貝爾'], sentence: '他偶爾會去圖書館看書。' },
+  { char: '消', level: 2, radical: '水', bopomofo: 'ㄒㄧㄠ', pinyin: 'xiāo', words: ['消息', '消費'], sentence: '冰淇淋在太陽下融消了。' },
+  { char: '厚', level: 2, radical: '厂', bopomofo: 'ㄏㄡˋ', pinyin: 'hòu', words: ['濃厚', '深厚'], sentence: '這本字典非常厚重。' },
+  { char: '餃', level: 4, radical: '食', bopomofo: 'ㄐㄧㄠˇ', pinyin: 'jiǎo', words: ['餃子', '水餃'], sentence: '我們一起包了很多水餃。' },
+  { char: '確', level: 4, radical: '石', bopomofo: 'ㄑㄩㄝˋ', pinyin: 'què', words: ['確定', '正確'], sentence: '請你確認一下這個答案。' },
+  { char: '稍', level: 3, radical: '禾', bopomofo: 'ㄕㄠ、ㄕㄠˋ', pinyin: 'shāo、shào', words: ['稍微', '稍稍'], sentence: '請你稍微等我一下。' },
+  { char: '酸', level: 4, radical: '酉', bopomofo: 'ㄙㄨㄢ', pinyin: 'suān', words: ['酸性', '硫酸'], sentence: '這顆檸檬吃起來非常酸。' },
+  { char: '賀', level: 3, radical: '貝', bopomofo: 'ㄏㄜˋ', pinyin: 'hè', words: ['祝賀', '慶賀'], sentence: '大家一起祝賀他生日快樂。' },
+  { char: '挺', level: 2, radical: '手', bopomofo: 'ㄊㄧㄥˇ', pinyin: 'tǐng', words: ['挺進', '葉挺'], sentence: '因為他站得很挺，所以看起來特別有精神。' },
+  { char: '傅', level: 3, radical: '人', bopomofo: 'ㄈㄨˋ', pinyin: 'fù', words: ['師傅', '太傅'], sentence: '因為師傅教得很仔細，所以他很快就學會了。' },
+  { char: '往', level: 2, radical: '彳', bopomofo: 'ㄨㄤˇ', pinyin: 'wǎng', words: ['往往', '前往'], sentence: '公車正往學校方向開去。' },
+  { char: '值', level: 2, radical: '人', bopomofo: 'ㄓˊ、ㄓˋ', pinyin: 'zhí、zhì', words: ['價值', '產值'], sentence: '這個問題很值得討論。' },
+  { char: '免', level: 1, radical: '儿', bopomofo: 'ㄇㄧㄢˇ、ㄨㄣˋ', pinyin: 'miǎn、wèn', words: ['任免', '避免'], sentence: '這場活動不用付費，免費參加。' },
+  { char: '誼', level: 4, radical: '言', bopomofo: 'ㄧˋ、ㄧˊ', pinyin: 'yì、yí', words: ['友誼', '聯誼'], sentence: '我們珍惜彼此的友誼。' },
+  { char: '合', level: 1, radical: '口', bopomofo: 'ㄏㄜˊ、ㄍㄜˇ', pinyin: 'hé、gě', words: ['合作', '聯合'], sentence: '大家一起合作完成作業。' },
+  { char: '猜', level: 2, radical: '犬', bopomofo: 'ㄘㄞ', pinyin: 'cāi', words: ['猜測', '猜想'], sentence: '請你猜猜看這是什麼。' },
+  { char: '傢', level: 3, radical: '人', bopomofo: 'ㄐㄧㄚ', pinyin: 'jiā', words: ['傢伙', '傢俱'], sentence: '我們買了新的傢俱。' },
+  { char: '深', level: 2, radical: '水', bopomofo: 'ㄕㄣ', pinyin: 'shēn', words: ['深入', '深刻'], sentence: '海洋的水非常深。' },
+  { char: '淚', level: 3, radical: '水', bopomofo: 'ㄌㄟˋ', pinyin: 'lèi', words: ['眼淚', '淚水'], sentence: '她感動得流下了眼淚。' },
+  { char: '爭', level: 2, radical: '爪', bopomofo: 'ㄓㄥ', pinyin: 'zhēng', words: ['戰爭', '鬥爭'], sentence: '我寧可讓步，也不要和朋友爭吵。' },
+  { char: '眾', level: 4, radical: '目', bopomofo: 'ㄓㄨㄥˋ', pinyin: 'zhòng', words: ['觀眾', '大眾'], sentence: '台上的表演吸引了許多觀眾。' },
+  { char: '咳', level: 2, radical: '口', bopomofo: 'ㄎㄜˊ、ㄎㄚˇ、ㄏㄞ', pinyin: 'ké、kǎ、hāi', words: ['咳嗽', '止咳'], sentence: '感冒讓他一直咳嗽。' },
+  { char: '暑', level: 3, radical: '日', bopomofo: 'ㄕㄨˇ', pinyin: 'shǔ', words: ['避暑', '暑假'], sentence: '我寧可提早完成暑假作業，也不要臨時趕工。' },
+  { char: '慮', level: 4, radical: '心', bopomofo: 'ㄌㄩˋ', pinyin: 'lǜ', words: ['考慮', '憂慮'], sentence: '請你仔細考慮這個問題。' },
+  { char: '討', level: 2, radical: '言', bopomofo: 'ㄊㄠˇ', pinyin: 'tǎo', words: ['討論', '探討'], sentence: '我們一起討論這個作業。' },
+  { char: '拉', level: 2, radical: '手', bopomofo: 'ㄌㄚ', pinyin: 'lā', words: ['拉開', '拉薩'], sentence: '請幫我拉開這扇門。' },
+  { char: '驚', level: 4, radical: '馬', bopomofo: 'ㄐㄧㄥ', pinyin: 'jīng', words: ['驚人', '驚訝'], sentence: '這個消息讓大家非常驚訝。' },
+  { char: '仍', level: 1, radical: '人', bopomofo: 'ㄖㄥˊ', pinyin: 'réng', words: ['仍然', '仍舊'], sentence: '雖然下雨，他仍然去上學。' },
+  { char: '鬧', level: 4, radical: '鬥', bopomofo: 'ㄋㄠˋ', pinyin: 'nào', words: ['熱鬧', '胡鬧'], sentence: '弟弟在客廳裡吵鬧不休。' },
+  { char: '寄', level: 3, radical: '宀', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['寄託', '寄生'], sentence: '我寄了一張卡片給朋友。' },
+  { char: '拒', level: 2, radical: '手', bopomofo: 'ㄐㄩˋ', pinyin: 'jù', words: ['拒絕', '抗拒'], sentence: '他拒絕了朋友的邀請。' },
+  { char: '味', level: 2, radical: '口', bopomofo: 'ㄨㄟˋ', pinyin: 'wèi', words: ['風味', '味道'], sentence: '雖然這道菜味道有點淡，但是還是很好吃。' },
+  { char: '戚', level: 3, radical: '戈', bopomofo: 'ㄑㄧ、ㄘㄨˋ', pinyin: 'qī、cù', words: ['親戚', '外戚'], sentence: '過年時親戚都來我家拜訪。' },
+  { char: '切', level: 1, radical: '刀', bopomofo: 'ㄑㄧㄝˋ、ㄑㄧㄝ', pinyin: 'qiè、qiē', words: ['一切', '密切'], sentence: '請小心用刀切水果。' },
+  { char: '訪', level: 3, radical: '言', bopomofo: 'ㄈㄤˇ', pinyin: 'fǎng', words: ['採訪', '訪問'], sentence: '記者正在採訪運動選手。' },
+  { char: '羞', level: 3, radical: '羊', bopomofo: 'ㄒㄧㄡ', pinyin: 'xiū', words: ['羞愧', '羞辱'], sentence: '雖然他有點害羞，但是還是勇敢舉手發言。' },
+  { char: '襪', level: 4, radical: '衣', bopomofo: 'ㄨㄚˋ', pinyin: 'wà', words: ['襪子', '鞋襪'], sentence: '弟弟穿了一雙新襪子。' },
+  { char: '制', level: 2, radical: '刀', bopomofo: 'ㄓˋ', pinyin: 'zhì', words: ['制度', '制定'], sentence: '學校有一套服裝規定制度。' },
+  { char: '揚', level: 3, radical: '手', bopomofo: 'ㄧㄤˊ', pinyin: 'yáng', words: ['揚州', '發揚'], sentence: '國旗在風中飄揚。' },
+  { char: '職', level: 4, radical: '耳', bopomofo: 'ㄓˊ', pinyin: 'zhí', words: ['職業', '職權'], sentence: '爸爸每天認真工作，盡忠職守。' },
+  { char: '止', level: 1, radical: '止', bopomofo: 'ㄓˇ', pinyin: 'zhǐ', words: ['停止', '防止'], sentence: '請你在線前停止。' },
+  { char: '填', level: 3, radical: '土', bopomofo: 'ㄊㄧㄢˊ', pinyin: 'tián', words: ['填報', '填補'], sentence: '請填寫你的姓名和年齡。' },
+  { char: '責', level: 3, radical: '貝', bopomofo: 'ㄗㄜˊ、ㄓㄞˋ', pinyin: 'zé、zhài', words: ['負責', '責任'], sentence: '這份工作不但需要負責任，而且要很細心。' },
+  { char: '呀', level: 1, radical: '口', bopomofo: 'ㄧㄚ、ㄒㄧㄚ', pinyin: 'yā、xiā', words: ['哎呀', '天呀'], sentence: '你今天真棒呀！' },
+  { char: '邀', level: 4, radical: '辵', bopomofo: 'ㄧㄠ', pinyin: 'yāo', words: ['邀請', '應邀'], sentence: '我邀請朋友來家裡玩。' },
+  { char: '勵', level: 4, radical: '力', bopomofo: 'ㄌㄧˋ', pinyin: 'lì', words: ['鼓勵', '獎勵'], sentence: '老師鼓勵我們認真讀書。' },
+  { char: '森', level: 3, radical: '木', bopomofo: 'ㄙㄣ', pinyin: 'sēn', words: ['森林', '森工'], sentence: '我們走進一片茂密的森林。' },
+  { char: '並', level: 2, radical: '一', bopomofo: 'ㄅㄧㄥˋ、ㄅㄤˋ', pinyin: 'bìng、bàng', words: ['並且', '並非'], sentence: '她認真並且細心地完成作業。' },
+  { char: '污', level: 4, radical: '水', bopomofo: 'ㄨ', pinyin: 'wū', words: ['污染', '貪污'], sentence: '請不要污染乾淨的河流。' },
+  { char: '假', level: 3, radical: '人', bopomofo: 'ㄐㄧㄚˇ、ㄐㄧㄚˋ', pinyin: 'jiǎ、jià', words: ['假定', '假如'], sentence: '暑假我們去海邊玩水。' },
+  { char: '專', level: 3, radical: '寸', bopomofo: 'ㄓㄨㄢ', pinyin: 'zhuān', words: ['專業', '專家'], sentence: '他既專心聽講，又認真做筆記。' },
+  { char: '洲', level: 2, radical: '水', bopomofo: 'ㄓㄡ', pinyin: 'zhōu', words: ['歐洲', '亞洲'], sentence: '台灣位於亞洲地區。' },
+  { char: '允', level: 1, radical: '儿', bopomofo: 'ㄩㄣˇ', pinyin: 'yǔn', words: ['允許', '應允'], sentence: '媽媽允許我出去玩。' },
+  { char: '聘', level: 3, radical: '耳', bopomofo: 'ㄆㄧㄣˋ、ㄆㄧㄥˋ', pinyin: 'pìn、pìng', words: ['招聘', '應聘'], sentence: '公司正在招聘新員工。' },
+  { char: '否', level: 1, radical: '口', bopomofo: 'ㄈㄡˇ、ㄆㄧˇ', pinyin: 'fǒu、pǐ', words: ['是否', '否則'], sentence: '我不知道他是否會來。' },
+  { char: '耐', level: 2, radical: '而', bopomofo: 'ㄋㄞˋ', pinyin: 'nài', words: ['耐心', '忍耐'], sentence: '他很有耐心地教導我。' },
+  { char: '脾', level: 3, radical: '肉', bopomofo: 'ㄆㄧˊ', pinyin: 'pí', words: ['脾氣', '脾胃'], sentence: '他的脾氣非常好。' },
+  { char: '悔', level: 2, radical: '心', bopomofo: 'ㄏㄨㄟˇ', pinyin: 'huǐ', words: ['後悔', '懊悔'], sentence: '他不但沒有後悔，而且更加努力。' },
+  { char: '卻', level: 2, radical: '卩', bopomofo: 'ㄑㄩㄝˋ', pinyin: 'què', words: ['卻是', '卻說'], sentence: '他很累卻不肯休息。' },
+  { char: '廣', level: 4, radical: '广', bopomofo: 'ㄍㄨㄤˇ', pinyin: 'guǎng', words: ['廣泛', '廣場'], sentence: '學校有一個寬廣的操場。' },
+  { char: '乓', level: 1, radical: '丿', bopomofo: 'ㄆㄤ', pinyin: 'pāng', words: ['乒乓', '乓乓'], sentence: '我們一起打乒乓球。' },
+  { char: '詳', level: 3, radical: '言', bopomofo: 'ㄒㄧㄤˊ', pinyin: 'xiáng', words: ['詳細', '詳情'], sentence: '老師詳細解釋這個問題。' },
+  { char: '修', level: 2, radical: '人', bopomofo: 'ㄒㄧㄡ', pinyin: 'xiū', words: ['修改', '修建'], sentence: '工人正在修理水管。' },
+  { char: '鹹', level: 4, radical: '鹵', bopomofo: 'ㄒㄧㄢˊ', pinyin: 'xián', words: ['鹹蛋', '鹹菜'], sentence: '這道菜的味道有點鹹。' },
+  { char: '嗽', level: 4, radical: '口', bopomofo: 'ㄙㄡˋ', pinyin: 'sòu', words: ['咳嗽', '嗽口'], sentence: '感冒讓他一直咳嗽。' },
+  { char: '況', level: 2, radical: '水', bopomofo: 'ㄎㄨㄤˋ', pinyin: 'kuàng', words: ['情況', '狀況'], sentence: '請告訴我事情的狀況。' },
+  { char: '折', level: 1, radical: '手', bopomofo: 'ㄓㄜˊ、ㄕㄜˊ、ㄓㄜ', pinyin: 'zhé、shé、zhē', words: ['曲折', '折磨'], sentence: '請把紙對折一半。' },
+  { char: '巾', level: 1, radical: '巾', bopomofo: 'ㄐㄧㄣ', pinyin: 'jīn', words: ['毛巾', '頭巾'], sentence: '請用毛巾擦乾手。' },
+  { char: '棵', level: 3, radical: '木', bopomofo: 'ㄎㄜ', pinyin: 'kē', words: ['一棵', '幾棵'], sentence: '這不是矮小的樹苗，而是一棵已經長高的大樹。' },
+  { char: '懶', level: 4, radical: '心', bopomofo: 'ㄌㄢˇ', pinyin: 'lǎn', words: ['懶得', '懶惰'], sentence: '他今天有點懶惰不想運動。' },
+  { char: '警', level: 4, radical: '言', bopomofo: 'ㄐㄧㄥˇ', pinyin: 'jǐng', words: ['軍警', '警察'], sentence: '警察正在維持交通秩序。' },
+  { char: '座', level: 2, radical: '广', bopomofo: 'ㄗㄨㄛˋ', pinyin: 'zuò', words: ['一座', '兩座'], sentence: '公園裡有一座漂亮噴泉。' },
+  { char: '悉', level: 3, radical: '心', bopomofo: 'ㄒㄧ', pinyin: 'xī', words: ['熟悉', '據悉'], sentence: '他對這條路非常熟悉。' },
+  { char: '勇', level: 2, radical: '力', bopomofo: 'ㄩㄥˇ', pinyin: 'yǒng', words: ['勇氣', '勇敢'], sentence: '消防員既勇敢又細心。' },
+  { char: '精', level: 4, radical: '米', bopomofo: 'ㄐㄧㄥ', pinyin: 'jīng', words: ['精神', '精彩'], sentence: '他做事情非常精細認真。' },
+  { char: '技', level: 1, radical: '手', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['技術', '科技'], sentence: '他很會畫畫，畫畫技巧很好。' },
+  { char: '豬', level: 4, radical: '豕', bopomofo: 'ㄓㄨ', pinyin: 'zhū', words: ['豬肉', '生豬'], sentence: '農場裡養了幾隻小豬。' },
+  { char: '握', level: 3, radical: '手', bopomofo: 'ㄨㄛˋ', pinyin: 'wò', words: ['掌握', '把握'], sentence: '請你緊緊握住我的手。' },
+  { char: '笨', level: 3, radical: '竹', bopomofo: 'ㄅㄣˋ', pinyin: 'bèn', words: ['笨重', '笨拙'], sentence: '只要多練習，就不會顯得那麼笨拙。' },
+  { char: '支', level: 1, radical: '支', bopomofo: 'ㄓ', pinyin: 'zhī', words: ['支持', '一支'], sentence: '我買了一支新鉛筆。' },
+  { char: '福', level: 4, radical: '示', bopomofo: 'ㄈㄨˊ', pinyin: 'fú', words: ['幸福', '福建'], sentence: '我們祝爺爺幸福健康。' },
+  { char: '窮', level: 4, radical: '穴', bopomofo: 'ㄑㄩㄥˊ', pinyin: 'qióng', words: ['窮人', '無窮'], sentence: '他雖然生活貧窮，卻很快樂。' },
+  { char: '括', level: 2, radical: '手', bopomofo: 'ㄍㄨㄚ、ㄎㄨㄛˋ', pinyin: 'guā、kuò', words: ['包括', '概括'], sentence: '這份清單包括所有物品。' },
+  { char: '弄', level: 1, radical: '廾', bopomofo: 'ㄋㄨㄥˋ、ㄌㄨㄥˋ', pinyin: 'nòng、lòng', words: ['弄清', '弄堂'], sentence: '請不要弄壞我的玩具。' },
+  { char: '破', level: 2, radical: '石', bopomofo: 'ㄆㄛˋ', pinyin: 'pò', words: ['破壞', '突破'], sentence: '這個杯子不小心破掉了。' },
+  { char: '倍', level: 2, radical: '人', bopomofo: 'ㄅㄟˋ', pinyin: 'bèi', words: ['一倍', '十倍'], sentence: '今年的收成比去年多一倍。' },
+  { char: '規', level: 3, radical: '見', bopomofo: 'ㄍㄨㄟ', pinyin: 'guī', words: ['規定', '規模'], sentence: '我們要遵守學校的規定。' },
+  { char: '士', level: 1, radical: '士', bopomofo: 'ㄕˋ', pinyin: 'shì', words: ['人士', '士兵'], sentence: '公園裡站著一位勇士雕像。' },
+  { char: '皮', level: 1, radical: '皮', bopomofo: 'ㄆㄧˊ', pinyin: 'pí', words: ['皮膚', '羊皮'], sentence: '蘋果的皮是紅色的。' },
+  { char: '與', level: 4, radical: '臼', bopomofo: 'ㄩˇ、ㄩˋ、ㄩˊ', pinyin: 'yǔ、yù、yú', words: ['參與', '與其'], sentence: '他積極參與班上的活動。' },
+  { char: '險', level: 4, radical: '阜', bopomofo: 'ㄒㄧㄢˇ', pinyin: 'xiǎn', words: ['風險', '危險'], sentence: '過馬路要注意危險。' },
+  { char: '頓', level: 3, radical: '頁', bopomofo: 'ㄉㄨㄣˋ、ㄉㄨˊ', pinyin: 'dùn、dú', words: ['一頓', '頓時'], sentence: '我們吃了一頓豐盛的晚餐。' },
+  { char: '停', level: 3, radical: '人', bopomofo: 'ㄊㄧㄥˊ', pinyin: 'tíng', words: ['停止', '不停'], sentence: '除非紅燈亮起，車子才會停下來。' },
+  { char: '濟', level: 4, radical: '水', bopomofo: 'ㄐㄧˋ、ㄐㄧˇ', pinyin: 'jì、jǐ', words: ['經濟', '濟南'], sentence: '爸爸每天關心經濟新聞。' },
+  { char: '猴', level: 3, radical: '犬', bopomofo: 'ㄏㄡˊ', pinyin: 'hóu', words: ['猴子', '猴頭'], sentence: '動物園裡有一群猴子。' },
+  { char: '涼', level: 3, radical: '水', bopomofo: 'ㄌㄧㄤˊ、ㄌㄧㄤˋ', pinyin: 'liáng、liàng', words: ['荒涼', '淒涼'], sentence: '夏天喝涼水感覺很舒服。' },
+  { char: '掛', level: 3, radical: '手', bopomofo: 'ㄍㄨㄚˋ', pinyin: 'guà', words: ['懸掛', '掛牌'], sentence: '牆上掛著一幅美麗的畫。' },
+  { char: '社', level: 2, radical: '示', bopomofo: 'ㄕㄜˋ', pinyin: 'shè', words: ['社會', '社區'], sentence: '我參加了學校的美術社團。' },
+  { char: '贏', level: 4, radical: '貝', bopomofo: 'ㄧㄥˊ', pinyin: 'yíng', words: ['贏得', '打贏'], sentence: '我們這次比賽贏得了冠軍。' },
+  { char: '硬', level: 3, radical: '石', bopomofo: 'ㄧㄥˋ', pinyin: 'yìng', words: ['硬件', '堅硬'], sentence: '不管石頭多堅硬，工人都能慢慢鑿開。' },
+  { char: '潤', level: 4, radical: '水', bopomofo: 'ㄖㄨㄣˋ', pinyin: 'rùn', words: ['利潤', '溼潤'], sentence: '冬天要記得擦護手霜保持滋潤。' },
+  { char: '驗', level: 4, radical: '馬', bopomofo: 'ㄧㄢˋ', pinyin: 'yàn', words: ['經驗', '實驗'], sentence: '今天我們做了一個科學實驗。' },
+  { char: '俱', level: 2, radical: '人', bopomofo: 'ㄐㄩˋ、ㄐㄩ', pinyin: 'jù、jū', words: ['傢俱', '俱全'], sentence: '這不是普通的教室，而是設備俱全的活動中心。' },
+  { char: '肚', level: 1, radical: '肉', bopomofo: 'ㄉㄨˋ、ㄉㄨˇ', pinyin: 'dù、dǔ', words: ['魚肚', '肚子'], sentence: '吃太多讓我肚子痛。' },
+  { char: '里', level: 1, radical: '里', bopomofo: 'ㄌㄧˇ', pinyin: 'lǐ', words: ['公里', '故里'], sentence: '這座村里風景很美。' },
+  { char: '範', level: 4, radical: '竹', bopomofo: 'ㄈㄢˋ', pinyin: 'fàn', words: ['範圍', '規範'], sentence: '他是同學的模範生。' },
+  { char: '垃', level: 2, radical: '土', bopomofo: 'ㄌㄜˋ', pinyin: 'lè', words: ['垃圾', '坷垃'], sentence: '請把垃圾丟進垃圾桶。' },
+  { char: '術', level: 3, radical: '行', bopomofo: 'ㄕㄨˋ、ㄙㄨㄟˋ', pinyin: 'shù、suì', words: ['技術', '藝術'], sentence: '他很有繪畫的藝術天分。' },
+  { char: '態', level: 4, radical: '心', bopomofo: 'ㄊㄞˋ', pinyin: 'tài', words: ['狀態', '態度'], sentence: '他保持著友善的態度。' },
+  { char: '乘', level: 2, radical: '丿', bopomofo: 'ㄔㄥˊ、ㄕㄥˋ', pinyin: 'chéng、shèng', words: ['乘機', '乘坐'], sentence: '我們乘坐公車去動物園。' },
+  { char: '血', level: 1, radical: '血', bopomofo: 'ㄒㄧㄝˇ、ㄒㄩㄝˋ', pinyin: 'xiě、xuè', words: ['血液', '鮮血'], sentence: '醫生正在檢查他的血壓。' },
+  { char: '默', level: 4, radical: '黑', bopomofo: 'ㄇㄛˋ', pinyin: 'mò', words: ['沉默', '默默'], sentence: '他默默地完成了作業。' },
+  { char: '困', level: 1, radical: '囗', bopomofo: 'ㄎㄨㄣˋ', pinyin: 'kùn', words: ['困難', '貧困'], sentence: '這道題目讓我感到困難。' },
+  { char: '植', level: 3, radical: '木', bopomofo: 'ㄓˊ', pinyin: 'zhí', words: ['植物', '種植'], sentence: '農夫在田裡種植稻米。' },
+  { char: '躺', level: 4, radical: '身', bopomofo: 'ㄊㄤˇ', pinyin: 'tǎng', words: ['躺倒', '躺椅'], sentence: '弟弟喜歡躺在床上看書。' },
+  { char: '飲', level: 3, radical: '食', bopomofo: 'ㄧㄣˇ、ㄧㄣˋ', pinyin: 'yǐn、yìn', words: ['飲食', '飲酒'], sentence: '如果天氣太熱，就要多補充飲水。' },
+  { char: '漫', level: 4, radical: '水', bopomofo: 'ㄇㄢˋ、ㄇㄢˊ', pinyin: 'màn、mán', words: ['漫長', '浪漫'], sentence: '弟弟喜歡看漫畫書。' },
+  { char: '密', level: 3, radical: '宀', bopomofo: 'ㄇㄧˋ', pinyin: 'mì', words: ['密切', '祕密'], sentence: '這是我們之間的秘密。' },
+  { char: '誠', level: 3, radical: '言', bopomofo: 'ㄔㄥˊ', pinyin: 'chéng', words: ['真誠', '誠信'], sentence: '他是一位誠實的孩子。' },
+  { char: '陪', level: 3, radical: '阜', bopomofo: 'ㄆㄟˊ', pinyin: 'péi', words: ['陪同', '陪伴'], sentence: '即使工作很忙，媽媽也每天陪我讀書。' },
+  { char: '忽', level: 2, radical: '心', bopomofo: 'ㄏㄨ', pinyin: 'hū', words: ['忽然', '忽視'], sentence: '他忽然想起了一件事。' },
+  { char: '譯', level: 4, radical: '言', bopomofo: 'ㄧˋ', pinyin: 'yì', words: ['翻譯', '破譯'], sentence: '他把這篇文章翻譯成中文。' },
+  { char: '幽', level: 2, radical: '幺', bopomofo: 'ㄧㄡ', pinyin: 'yōu', words: ['幽默', '幽靈'], sentence: '這條巷子非常幽靜。' },
+  { char: '擾', level: 4, radical: '手', bopomofo: 'ㄖㄠˇ', pinyin: 'rǎo', words: ['干擾', '困擾'], sentence: '請不要打擾正在讀書的同學。' },
+  { char: '頁', level: 2, radical: '頁', bopomofo: 'ㄒㄧㄝˊ、ㄧㄝˋ', pinyin: 'xié、yè', words: ['一頁', '網頁'], sentence: '只要翻到下一頁，就能看到答案。' },
+  { char: '傲', level: 3, radical: '人', bopomofo: 'ㄠˋ', pinyin: 'ào', words: ['驕傲', '傲慢'], sentence: '他為自己的成績感到驕傲。' },
+  { char: '授', level: 3, radical: '手', bopomofo: 'ㄕㄡˋ', pinyin: 'shòu', words: ['教授', '授予'], sentence: '教授正在講解課程內容。' },
+  { char: '礎', level: 4, radical: '石', bopomofo: 'ㄔㄨˇ', pinyin: 'chǔ', words: ['基礎', '石礎'], sentence: '學好基礎知識很重要。' },
+  { char: '估', level: 1, radical: '人', bopomofo: 'ㄍㄨ、ㄍㄨˇ、ㄍㄨˋ', pinyin: 'gū、gǔ、gù', words: ['估計', '評估'], sentence: '老師估計明天會下雨。' },
+  { char: '適', level: 4, radical: '辵', bopomofo: 'ㄕˋ、ㄉㄧˊ', pinyin: 'shì、dí', words: ['適應', '適當'], sentence: '這件衣服非常適合你。' },
+  { char: '減', level: 3, radical: '水', bopomofo: 'ㄐㄧㄢˇ', pinyin: 'jiǎn', words: ['減少', '減輕'], sentence: '他每天運動想要減肥。' },
+  { char: '潑', level: 4, radical: '水', bopomofo: 'ㄆㄛ', pinyin: 'pō', words: ['活潑', '潑辣'], sentence: '她的個性非常活潑。' },
+  { char: '既', level: 2, radical: '无', bopomofo: 'ㄐㄧˋ', pinyin: 'jì', words: ['既然', '既有'], sentence: '他既聰明又努力。' },
+  { char: '招', level: 2, radical: '手', bopomofo: 'ㄓㄠ、ㄕㄠˊ、ㄑㄧㄠˊ', pinyin: 'zhāo、sháo、qiáo', words: ['招生', '招聘'], sentence: '他向我招手打招呼。' },
+  { char: '判', level: 1, radical: '刀', bopomofo: 'ㄆㄢˋ', pinyin: 'pàn', words: ['判斷', '審判'], sentence: '裁判正在為比賽評分。' },
+  { char: '留', level: 2, radical: '田', bopomofo: 'ㄌㄧㄡˊ', pinyin: 'liú', words: ['留下', '留在'], sentence: '請你留下聯絡電話。' },
+  { char: '即', level: 1, radical: '卩', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['立即', '即使'], sentence: '請你立即出發。' },
+  { char: '惜', level: 3, radical: '心', bopomofo: 'ㄒㄧˊ', pinyin: 'xí', words: ['可惜', '不惜'], sentence: '因為時間很珍貴，所以他懂得好好珍惜。' },
+  { char: '乒', level: 1, radical: '丿', bopomofo: 'ㄆㄧㄥ', pinyin: 'pīng', words: ['乒乓', '乒羽'], sentence: '我們一起打乒乓球。' },
+  { char: '預', level: 3, radical: '頁', bopomofo: 'ㄩˋ', pinyin: 'yù', words: ['預算', '預計'], sentence: '請提前預約看診時間。' },
+  { char: '集', level: 3, radical: '隹', bopomofo: 'ㄐㄧˊ', pinyin: 'jí', words: ['集團', '集中'], sentence: '我們一起收集漂亮的貝殼。' },
+  { char: '江', level: 1, radical: '水', bopomofo: 'ㄐㄧㄤ', pinyin: 'jiāng', words: ['長江', '江南'], sentence: '我們搭船遊覽江邊風景。' },
+  { char: '堵', level: 3, radical: '土', bopomofo: 'ㄉㄨˇ', pinyin: 'dǔ', words: ['堵塞', '堵住'], sentence: '我寧可早點出門，也不要被塞車堵在路上。' },
+  { char: '擦', level: 4, radical: '手', bopomofo: 'ㄘㄚ', pinyin: 'cā', words: ['摩擦', '擦拭'], sentence: '請你擦乾桌上的水漬。' },
+  { char: '繫', level: 4, radical: '糸', bopomofo: 'ㄒㄧˋ、ㄐㄧˋ', pinyin: 'xì、jì', words: ['聯繫', '維繫'], sentence: '請把鞋帶繫緊一點。' },
+  { char: '象', level: 3, radical: '豕', bopomofo: 'ㄒㄧㄤˋ', pinyin: 'xiàng', words: ['現象', '形象'], sentence: '動物園裡有一隻大象。' },
+  { char: '獲', level: 4, radical: '犬', bopomofo: 'ㄏㄨㄛˋ、ㄏㄨㄞˊ', pinyin: 'huò、huái', words: ['獲得', '獲取'], sentence: '他在比賽中獲得第一名。' },
+  { char: '鍵', level: 4, radical: '金', bopomofo: 'ㄐㄧㄢˋ', pinyin: 'jiàn', words: ['關鍵', '鍵盤'], sentence: '請按下電腦的按鍵。' },
+  { char: '驕', level: 4, radical: '馬', bopomofo: 'ㄐㄧㄠ', pinyin: 'jiāo', words: ['驕傲', '驕橫'], sentence: '他為自己的努力感到驕傲。' },
+  { char: '燥', level: 4, radical: '火', bopomofo: 'ㄗㄠˋ、ㄙㄠˋ', pinyin: 'zào、sào', words: ['乾燥', '枯燥'], sentence: '冬天天氣乾燥要多喝水。' },
+  { char: '究', level: 1, radical: '穴', bopomofo: 'ㄐㄧㄡˋ、ㄐㄧㄡ', pinyin: 'jiù、jiū', words: ['研究', '究竟'], sentence: '我想仔細研究這個問題。' },
+  { char: '擴', level: 4, radical: '手', bopomofo: 'ㄎㄨㄛˋ', pinyin: 'kuò', words: ['擴大', '擴展'], sentence: '工廠準備擴大生產規模。' },
+  { char: '此', level: 1, radical: '止', bopomofo: 'ㄘˇ', pinyin: 'cǐ', words: ['因此', '如此'], sentence: '他從此更用功了。' },
+  { char: '孫', level: 2, radical: '子', bopomofo: 'ㄙㄨㄣ、ㄒㄩㄣˋ、ㄙㄨㄣˋ', pinyin: 'sūn、xùn、sùn', words: ['子孫', '孫權'], sentence: '爺爺很疼愛他的孫子。' },
+  { char: '證', level: 4, radical: '言', bopomofo: 'ㄓㄥˋ', pinyin: 'zhèng', words: ['保證', '證明'], sentence: '他拿到了游泳的證書。' },
+  { char: '博', level: 3, radical: '十', bopomofo: 'ㄅㄛˊ', pinyin: 'bó', words: ['博士', '博客'], sentence: '我們去參觀科學博物館。' },
+  { char: '倆', level: 2, radical: '人', bopomofo: 'ㄌㄧㄤˇ、ㄌㄧㄚˇ', pinyin: 'liǎng、liǎ', words: ['咱倆', '他倆'], sentence: '我們倆是最好的朋友。' },
+  { char: '獅', level: 3, radical: '犬', bopomofo: 'ㄕ', pinyin: 'shī', words: ['獅子', '珞獅'], sentence: '動物園裡有一隻獅子。' },
+  { char: '印', level: 1, radical: '卩', bopomofo: 'ㄧㄣˋ', pinyin: 'yìn', words: ['印度', '印象'], sentence: '老師在考卷上蓋印章。' },
+];
+
+// ====== 設定 ======
+const API_URL = 'https://script.google.com/macros/s/AKfycbztwnHDW5KjkVYovtIi04b9dZd_xT6P2_oxRRDL4xS-lGYiaFbsFIKcq48GGOFQhhVcrw/exec'; // 你的 GAS /exec 網址，部署後貼在這裡
+
+const LEVELS = [
+  { id:1, name:'Sprout',  zh:'幼苗', icon:'🌟', color:'#2E9E6C' },
+  { id:2, name:'Sapling', zh:'幼樹', icon:'🌊', color:'#3B82C4' },
+  { id:3, name:'Bloom',   zh:'開花', icon:'🚀', color:'#F2994A' },
+  { id:4, name:'Harvest', zh:'豐收', icon:'▦',  color:'#E0554F' },
+];
+
+let currentUser = null;
+let currentLevel = null;
+let currentPool = [];
+let currentQuestion = null;
+let currentSentence = '';
+let score = 0, streak = 0;
+let recentResults = {1:[],2:[],3:[],4:[]}; // 每級最近10題正確率
+
+// ====== 畫面切換 ======
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ====== API 呼叫 ======
+async function apiCall(action, payload){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain' }, // 避免 CORS preflight
+    body: JSON.stringify({ action, ...payload })
+  });
+  return res.json();
+}
+
+async function doLogin(){
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if(!username || !password){ errEl.textContent = '請輸入帳號與密碼'; return; }
+  try{
+    const result = await apiCall('login', { username, password });
+    if(result.success){
+      currentUser = username;
+      renderLevels();
+      showScreen('screen-levels');
+    } else {
+      errEl.textContent = result.message || '帳號或密碼錯誤';
+    }
+  } catch(e){
+    errEl.textContent = '連線失敗，請稍後再試';
+  }
+}
+
+async function doRegister(){
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const errEl = document.getElementById('register-error');
+  errEl.textContent = '';
+  if(!username || !password){ errEl.textContent = '請輸入帳號與密碼'; return; }
+  try{
+    const result = await apiCall('register', { username, password });
+    if(result.success){
+      currentUser = username;
+      renderLevels();
+      showScreen('screen-levels');
+    } else {
+      errEl.textContent = result.message || '註冊失敗，帳號可能已被使用';
+    }
+  } catch(e){
+    errEl.textContent = '連線失敗，請稍後再試';
+  }
+}
+
+// ====== 關卡選擇 ======
+function renderLevels(){
+  const list = document.getElementById('level-list');
+  list.innerHTML = '';
+  LEVELS.forEach(lv=>{
+    const count = DATA.filter(d=>d.level===lv.id).length;
+    const results = recentResults[lv.id];
+    const acc = results.length ? Math.round(results.reduce((a,b)=>a+b,0)/results.length*100) : 0;
+    const div = document.createElement('div');
+    div.className = 'level-card';
+    div.onclick = ()=> startLevel(lv.id);
+    div.innerHTML = `
+      <div class="level-icon" style="background:${lv.color}">${lv.icon}</div>
+      <div class="level-info">
+        <div class="level-name">${lv.zh} ${lv.name}</div>
+        <div class="level-sub">${count} 個字 · 近10題正確率 ${acc}%</div>
+        <div class="level-progress"><div class="level-progress-bar" style="width:${acc}%"></div></div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function startLevel(levelId){
+  currentLevel = levelId;
+  currentPool = DATA.filter(d=>d.level===levelId);
+  score = 0; streak = 0;
+  updateTopbar();
+  showScreen('screen-game');
+  nextQuestion();
+}
+
+function backToLevels(){
+  renderLevels();
+  showScreen('screen-levels');
+}
+
+function updateTopbar(){
+  document.getElementById('score-pill').textContent = `✅ ${score}`;
+  document.getElementById('streak-badge').textContent = `🔥 連對 ${streak}`;
+}
+
+// ====== 出題 ======
+function nextQuestion(){
+  document.getElementById('reveal-card').style.display = 'none';
+  document.getElementById('question-char').style.display = 'block';
+  document.querySelector('.choices').style.display = 'grid';
+
+  const idx = Math.floor(Math.random()*currentPool.length);
+  currentQuestion = currentPool[idx];
+  document.getElementById('question-char').textContent = currentQuestion.char;
+
+  // 產生四選一（正解 + 3 個干擾部首）
+  const allRadicals = [...new Set(DATA.map(d=>d.radical))];
+  const wrongPool = allRadicals.filter(r=>r!==currentQuestion.radical);
+  const wrongs = [];
+  while(wrongs.length < 3 && wrongPool.length){
+    const i = Math.floor(Math.random()*wrongPool.length);
+    wrongs.push(wrongPool.splice(i,1)[0]);
+  }
+  const options = [currentQuestion.radical, ...wrongs].sort(()=>Math.random()-0.5);
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt;
+    btn.onclick = ()=> answer(opt, btn);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function answer(opt, btnEl){
+  const correct = opt === currentQuestion.radical;
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === currentQuestion.radical) b.classList.add('correct');
+    else if(b === btnEl && !correct) b.classList.add('wrong');
+  });
+
+  if(correct){ score++; streak++; } else { streak = 0; }
+  recentResults[currentLevel].push(correct?1:0);
+  if(recentResults[currentLevel].length > 10) recentResults[currentLevel].shift();
+  updateTopbar();
+
+  setTimeout(()=> revealDetail(), 500);
+}
+
+function revealDetail(){
+  document.getElementById('question-char').style.display = 'none';
+  document.querySelector('.choices').style.display = 'none';
+
+  const card = document.getElementById('reveal-card');
+  card.style.display = 'block';
+  document.getElementById('reveal-char').textContent = currentQuestion.char;
+
+  const vocabRow = document.getElementById('vocab-row');
+  vocabRow.innerHTML = '';
+  currentQuestion.words.forEach(w=>{
+    const pill = document.createElement('div');
+    pill.className = 'vocab-pill';
+    pill.innerHTML = `<span>${w}</span><button class="speak-btn" onclick="speakText('${w.replace(/'/g,"\\'")}')">🔊</button>`;
+    vocabRow.appendChild(pill);
+  });
+
+  currentSentence = currentQuestion.sentence;
+  document.getElementById('sentence-text').textContent = currentSentence;
+
+  drawStroke(currentQuestion.char, currentQuestion.radical);
+}
+
+// ====== 筆順動畫（三色：紅=首筆，藍=部首，綠=其餘） ======
+function drawStroke(char, radical){
+  const target = document.getElementById('stroke-target');
+  target.innerHTML = '';
+  HanziWriter.loadCharacterData(char).then(charData=>{
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS,'svg');
+    svg.setAttribute('viewBox','0 0 1024 1024');
+    svg.setAttribute('width','140'); svg.setAttribute('height','140');
+    target.appendChild(svg);
+
+    charData.strokes.forEach((strokePath, i)=>{
+      const path = document.createElementNS(svgNS,'path');
+      path.setAttribute('d', strokePath);
+      path.setAttribute('transform','translate(0,900) scale(1,-1)');
+      let color = '#2E9E6C'; // 其餘=綠
+      if(i === 0) color = '#E0554F'; // 首筆=紅
+      // 簡化：若部首筆畫數已知可再細分，此處以首筆特別標示
+      path.setAttribute('fill', color);
+      path.style.opacity = '0';
+      path.style.transition = 'opacity 0.4s';
+      svg.appendChild(path);
+      setTimeout(()=>{ path.style.opacity = '1'; }, i*350);
+    });
+  }).catch(()=>{
+    target.innerHTML = `<div style="font-size:100px;line-height:140px;">${char}</div>`;
+  });
+}
+
+// ====== 發音 ======
+function speakText(text){
+  if(!('speechSynthesis' in window)) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const zhVoice = voices.find(v=>v.lang==='zh-TW') || voices.find(v=>v.lang && v.lang.startsWith('zh'));
+  if(zhVoice) utter.voice = zhVoice;
+  utter.lang = 'zh-TW';
+  speechSynthesis.speak(utter);
+}
+</script>
+</body>
+</html>
