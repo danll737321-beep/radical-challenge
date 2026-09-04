@@ -86,6 +86,13 @@
 
   .reveal-card{ width:100%; max-width:420px; background:#fff; border-radius:20px; box-shadow:var(--shadow); padding:20px; margin-top:18px; }
   .reveal-char{ font-size:72px; font-weight:800; text-align:center; }
+  .reveal-radical{
+    text-align:center; margin:2px 0 10px;
+  }
+  .reveal-radical span{
+    display:inline-block; background:#E7F0FA; color:#3B82C4;
+    font-size:16px; font-weight:700; border-radius:10px; padding:4px 12px;
+  }
   .stroke-box{ display:flex; justify-content:center; margin:10px 0; }
   .vocab-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:14px 0; }
   .vocab-pill{
@@ -149,6 +156,7 @@
 
   <div class="reveal-card" id="reveal-card" style="display:none;">
     <div class="reveal-char" id="reveal-char"></div>
+    <div class="reveal-radical" id="reveal-radical"></div>
     <div class="stroke-box"><div id="stroke-target" style="width:140px;height:140px;"></div></div>
     <div class="vocab-row" id="vocab-row"></div>
     <div class="sentence-box">
@@ -1598,6 +1606,7 @@ function revealDetail(){
   const card = document.getElementById('reveal-card');
   card.style.display = 'block';
   document.getElementById('reveal-char').textContent = currentQuestion.char;
+  document.getElementById('reveal-radical').innerHTML = `<span>部首：${currentQuestion.radical}</span>`;
 
   const vocabRow = document.getElementById('vocab-row');
   vocabRow.innerHTML = '';
